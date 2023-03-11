@@ -1,19 +1,23 @@
-# configparser for reading config.ini, which contains the bot token
 import configparser
-# import everything from discord.py
+import sqlite3
 import discord
+import datetime
+from updatedb import update_db
 
-# Read the secret.ini file
+
+# Read the secret.ini file for bot token
 config = configparser.ConfigParser()
 config.read('secret.ini')
-
-# Get the bot token from the config.ini file
 token = config['DEFAULT']['token']
+config.read('config.ini')
+db_file = config['DEFAULT']['db_file']
+schema_file = config['DEFAULT']['schema_file']
 
+# Update the database
+update_db(db_file, schema_file)
 
+# Our intents are the things we want to listen for from the Discord API
 intents = discord.Intents.default()
-intents.typing = False
-intents.presences = False
 intents.message_content = True
 
 client = discord.Client(intents=intents)
