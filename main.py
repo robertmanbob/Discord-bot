@@ -1,40 +1,40 @@
 import configparser
-import sqlite3
-import discord
 import datetime
-from updatedb import update_db
+import typing
+import discord
+from discord.ext import commands
+from cogs import roleping
 
 
-# Read the secret.ini file for bot token
+# Read the secret.ini file for bot token and owner ID
 config = configparser.ConfigParser()
 config.read('secret.ini')
 token = config['DEFAULT']['token']
-config.read('config.ini')
-db_file = config['DEFAULT']['db_file']
-schema_file = config['DEFAULT']['schema_file']
+owner = config['DEFAULT']['owner']
 
-# Update the database
-update_db(db_file, schema_file)
+class MyBot(commands.Bot):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            command_prefix='$',
+            intents=discord.Intents.all())
+        
+    async def setup_hook(self):
+        await bot.load_extension('cogs.roleping')
+        print('Loaded roleping extension')
+        await bot.tree.sync()
+    
+    async def on_ready(self):
+        print('Logged in as')
+        print(self.user.name)
+        print(self.user.id)
+        print('------')
 
-# Our intents are the things we want to listen for from the Discord API
-intents = discord.Intents.default()
-intents.message_content = True
 
-client = discord.Client(intents=intents)
+bot = MyBot()
 
-@client.event
-async def on_ready():
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('------')
+@bot.tree.command(name='ping', description='Pong!')
+async def ping(ctx):
+    await ctx.response.send_message('Pong!', ephemeral=True)
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
-
-client.run(token)
+bot.run(token)
