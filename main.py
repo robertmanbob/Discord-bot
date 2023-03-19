@@ -109,6 +109,7 @@ async def panic(ctx, *, message: typing.Optional[str] = None):
 async def update(ctx):
     repo = git.Repo()
     repo.remotes.origin.pull()
+    print('Updated to commit {}'.format(repo.head.object.hexsha))
     # Print that we updated the repo and the current commit
     await ctx.send('Updated to commit {}'.format(repo.head.object.hexsha))
     
