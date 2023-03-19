@@ -1,17 +1,17 @@
+import os
 import configparser
 import datetime
 import typing
 import discord
+import git
 from discord.ext import commands
-
-# List of cogs to load
-cogs = ['cogs.roleping']
 
 # Read the secret.ini file for bot token and owner ID
 config = configparser.ConfigParser()
 config.read('secret.ini')
 token = config['DEFAULT']['token']
-owner = config['DEFAULT']['owner']
+config.read('config.ini')
+cogs = config['DEFAULT']['cogs'].split(',')
 
 class MyBot(commands.Bot):
     
@@ -41,7 +41,7 @@ bot = MyBot()
 async def ping(ctx):
     await ctx.response.send_message('Pong!', ephemeral=True)
 
-# Manually reload a cog, owner only. Not a slash command.
+# Manually reload a cog, bot owner only. Not a slash command.
 @bot.command()
 @commands.is_owner()
 async def reload(ctx, cog: str):
@@ -52,12 +52,64 @@ async def reload(ctx, cog: str):
     except Exception as e:
         await ctx.send('Failed to reload cog: {}'.format(e))
 
-# Resync all slash commands, owner only. Not a slash command.
+# Resync all slash commands, bot owner only. Not a slash command.
 @bot.command()
 @commands.is_owner()
 async def resync(ctx):
     await bot.tree.sync()
     await ctx.send('Resynced slash commands')
 
+# Add a cog, bot owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def add(ctx, cog: str):
+    try:
+        await bot.load_extension(cog)
+
+        # Add the cog to the config file
+        config['DEFAULT']['cogs'] += ',' + cog
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
+        
+        await ctx.send('Added {}'.format(cog))
+    except Exception as e:
+        await ctx.send('Failed to add cog: {}'.format(e))
+
+# Remove a cog, bot owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def remove(ctx, cog: str):
+    try:
+        await bot.unload_extension(cog)
+
+        # Remove the cog from the config file
+        cogs = config['DEFAULT']['cogs'].split(',')
+        cogs.remove(cog)
+        config['DEFAULT']['cogs'] = ','.join(cogs)
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
+        
+        await ctx.send('Removed {}'.format(cog))
+    except Exception as e:
+        await ctx.send('Failed to remove cog: {}'.format(e))
+
+# Panic command, bot owner or server admins. Not a slash command.
+# This will log the time, date, and optional message of the panic in a file, and then exit the bot.
+@bot.command()
+@commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
+async def panic(ctx, *, message: typing.Optional[str] = None):
+    with open('panic.txt', 'a') as f:
+        f.write('Panic at {}:\n{}\n'.format(datetime.datetime.now(), message))
+    await ctx.send('Panic logged, exiting')
+    await bot.close()
+
+# Self-update git command, bot owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def update(ctx):
+    repo = git.Repo()
+    repo.remotes.origin.pull()
+    await ctx.send('Updated git')
+    
 
 bot.run(token)
