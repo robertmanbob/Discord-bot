@@ -7,9 +7,10 @@ import git
 from discord.ext import commands
 
 # Read the secret.ini file for bot token and owner ID
+secret = configparser.ConfigParser()
+secret.read('secret.ini')
+token = secret['DEFAULT']['token']
 config = configparser.ConfigParser()
-config.read('secret.ini')
-token = config['DEFAULT']['token']
 config.read('config.ini')
 cogs = config['DEFAULT']['cogs'].split(',')
 
@@ -32,6 +33,18 @@ class MyBot(commands.Bot):
         print(self.user.name)
         print(self.user.id)
         print('------')
+
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send('You do not have permission to use this command')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send('Missing required argument: {}'.format(error.param.name))
+        elif isinstance(error, commands.CommandNotFound):
+            print('Command not found: {}'.format(ctx.message.content))
+        elif isinstance(error, commands.CheckFailure):
+            await ctx.send('You do not have permission to use this command')
+        else:
+            await ctx.send('Error: {}'.format(error))
 
 
 bot = MyBot()
