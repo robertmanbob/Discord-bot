@@ -59,7 +59,7 @@ class RolePings(commands.Cog):
                 self.next_ping_time), ephemeral=True
                 )
             return
-        await ctx.response.send_message('Hey {}, it\'s time to chat!'.format(role.mention), allowed_mentions=discord.AllowedMentions(roles=True))
+        await ctx.response.send_message('Hey {}! {} has decided that it\'s time to chat!'.format(role.mention, ctx.user.mention), allowed_mentions=discord.AllowedMentions(roles=True))
 
     @app_commands.command(name='listroles', description='List all roles and their IDs in the server')
     async def listroles(self, ctx: discord.Interaction):
