@@ -20,7 +20,7 @@ class RolePings(commands.Cog):
         roles = ctx.guild.roles
         role_string = ''
         for role in roles:
-            role_string += '{}TEST: {}\n'.format(role.name, role.id)
+            role_string += '{}: {}\n'.format(role.name, role.id)
         await ctx.response.send_message(role_string, ephemeral=True)
 
 async def setup(bot):
