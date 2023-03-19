@@ -3,7 +3,6 @@ import datetime
 import typing
 import discord
 from discord.ext import commands
-from cogs import roleping
 
 # List of cogs to load
 cogs = ['cogs.roleping']
