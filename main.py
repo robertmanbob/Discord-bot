@@ -5,6 +5,8 @@ import discord
 from discord.ext import commands
 from cogs import roleping
 
+# List of cogs to load
+cogs = ['cogs.roleping']
 
 # Read the secret.ini file for bot token and owner ID
 config = configparser.ConfigParser()
@@ -20,8 +22,10 @@ class MyBot(commands.Bot):
             intents=discord.Intents.all())
         
     async def setup_hook(self):
-        await bot.load_extension('cogs.roleping')
-        print('Loaded roleping extension')
+        # Load cogs
+        for cog in cogs:
+            await self.load_extension(cog)
+            print('Loaded {}'.format(cog))
         await bot.tree.sync()
     
     async def on_ready(self):
@@ -33,8 +37,28 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
+# Test ping command
 @bot.tree.command(name='ping', description='Pong!')
 async def ping(ctx):
     await ctx.response.send_message('Pong!', ephemeral=True)
+
+# Manually reload a cog, owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def reload(ctx, cog: str):
+    try:
+        await bot.unload_extension(cog)
+        await bot.load_extension(cog)
+        await ctx.send('Reloaded {}'.format(cog))
+    except Exception as e:
+        await ctx.send('Failed to reload cog: {}'.format(e))
+
+# Resync all slash commands, owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def resync(ctx):
+    await bot.tree.sync()
+    await ctx.send('Resynced slash commands')
+
 
 bot.run(token)
