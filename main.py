@@ -4,6 +4,7 @@ import datetime
 import typing
 import discord
 import git
+import sqlite3 # Crying emoji here
 from discord.ext import commands
 
 # Read the secret.ini file for bot token and owner ID
@@ -24,8 +25,11 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # Load cogs
         for cog in cogs:
-            await self.load_extension(cog)
-            print('Loaded {}'.format(cog))
+            try:
+                await self.load_extension(cog)
+                print('Loaded {}'.format(cog))
+            except Exception as e:
+                print('Failed to load extension {}\n{}: {}'.format(cog, type(e).__name__, e))
         await bot.tree.sync()
     
     async def on_ready(self):
@@ -79,8 +83,8 @@ async def add(ctx, cog: str):
     try:
         await bot.load_extension(cog)
 
-        # Add the cog to the config file
-        config['DEFAULT']['cogs'] += ',' + cog
+        # Add the cog to the config file, comma separated
+        config['DEFAULT']['cogs'] = ','.join([config['DEFAULT']['cogs'], cog])
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
         
@@ -125,6 +129,18 @@ async def update(ctx):
     print('Updated to commit {}'.format(repo.head.object.hexsha))
     # Print that we updated the repo and the current commit
     await ctx.send('Updated to commit {}'.format(repo.head.object.hexsha))
+
+# Connect to the desired database, run a query, and return the result
+# Owner only, not a slash command
+@bot.command()
+@commands.is_owner()
+async def query(ctx: discord.Interaction, *, query: str):
+    conn = sqlite3.connect('roleping.db')
+    c = conn.cursor()
+    c.execute(query)
+    result = c.fetchall()
+    conn.close()
+    await ctx.send('Result: {}'.format(result))
     
 
 bot.run(token)

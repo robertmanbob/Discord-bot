@@ -1,5 +1,6 @@
 secret.ini
 database.db
 *.pyc
+*.db
 panic*
 /cogs/*ini
