@@ -1,0 +1,2 @@
+Consolidate both utility.py scripts into one doodad
+Standardize to either passing objects or IDs around. This is getting annoying.

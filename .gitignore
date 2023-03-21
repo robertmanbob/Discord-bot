@@ -3,5 +3,4 @@ database.db
 *.pyc
 *.db
 *.txt
-panic*
 /cogs/*ini

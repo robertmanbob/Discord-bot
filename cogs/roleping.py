@@ -1,10 +1,10 @@
 import discord
-import configparser
 import time
 import sqlite3
 import os
 from discord import app_commands
 from discord.ext import commands
+from utility import user_is_at_least, get_role_of_rank
 
 # Set of servers that are known to be in the database
 known_servers = set()
@@ -39,24 +39,34 @@ class RolePings(commands.Cog):
     async def pingvc(self, ctx: discord.Interaction):
         # Check if the server is in the database
         check_server(ctx.guild.id, self.c, self.conn)
-        # Check if the server is enabled and get the role ID and next ping time, and ping timer
-        self.c.execute('SELECT rpenabled, role_id, next_roleping, timer_duration FROM roleping WHERE server_id=?', (ctx.guild.id,))
-        enabled, role, next_ping_time, ping_timer = self.c.fetchone()
+
+        # Check if the server is enabled and get the role ID and next ping time, ping timer, and minimum rank
+        self.c.execute('SELECT rpenabled, role_id, next_roleping, timer_duration, min_rank FROM roleping WHERE server_id=?', (ctx.guild.id,))
+        enabled, role, next_ping_time, ping_timer, min_rank = self.c.fetchone()
+
+        # Check if the user is at least rank min_rank
+        if not user_is_at_least(ctx.user, min_rank):
+            await ctx.response.send_message('You are not high enough level to use this command!', ephemeral=True)
+            return
+        
         # If the server is disabled or not in the database, don't ping the role
         if enabled == 0 or enabled is None:
             await ctx.response.send_message('VC pings are disabled for this server.', ephemeral=True)
             return
         role = discord.utils.get(ctx.guild.roles, id=role)
+
         # If the role is not found, don't ping the role (duh)
         if role is None:
             await ctx.response.send_message('Role not found, tell an admin to check `$roleadmin`', ephemeral=True)
             return
+        
         # Check if current unix time is greater than the next ping time
         if time.time() > next_ping_time:
             # Update the next ping time in the database
             next_time = int(time.time() + ping_timer * 60)
             self.c.execute('UPDATE roleping SET next_roleping=? WHERE server_id=?', (next_time, ctx.guild.id))
             self.conn.commit()
+
         # If the next ping time is in the future, don't ping the role
         else:
             await ctx.response.send_message('It\'s not time to chat yet! {} can be pinged again at <t:{}:t>'.format(
@@ -64,15 +74,25 @@ class RolePings(commands.Cog):
                 next_ping_time), ephemeral=True
                 )
             return
+        
+        # Finally, ping the role
         await ctx.response.send_message('Hey {}! {} has decided that it\'s time to chat!'.format(role.mention, ctx.user.mention), allowed_mentions=discord.AllowedMentions(roles=True))
 
     @app_commands.command(name='listroles', description='List all roles and their IDs in the server')
     async def listroles(self, ctx: discord.Interaction):
+        # If you're not the bot owner or owner of the server, you can't use this command
+        if not ctx.user.id == self.bot.owner_id and not ctx.user.id == ctx.guild.owner_id:
+            await ctx.response.send_message('You do not have permission to use this command.', ephemeral=True)
+            return
         roles = ctx.guild.roles
         role_string = ''
         for role in roles:
             role_string += '{}: {}\n'.format(role.name, role.id)
-        await ctx.response.send_message(role_string, ephemeral=True)
+        # Save the entire role list to a file and send it as a file
+        with open('roles.txt', 'w', encoding="utf-8") as f:
+            f.write(role_string)
+        await ctx.response.send_message('Here\'s a list of all roles in this server:', file=discord.File('roles.txt'))
+
 
     # Commands in the admin group are only available to the bot owner and server admins
     @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
@@ -80,8 +100,8 @@ class RolePings(commands.Cog):
     async def roleadmin(self, ctx: commands.Context):
         check_server(ctx.guild.id, self.c, self.conn)
         # Get the current settings from the database
-        self.c.execute('SELECT timer_duration, rpenabled, role_id FROM roleping WHERE server_id=?', (ctx.guild.id,))
-        time, enabled, role = self.c.fetchone()
+        self.c.execute('SELECT timer_duration, rpenabled, role_id, min_rank FROM roleping WHERE server_id=?', (ctx.guild.id,))
+        time, enabled, role, min_rank = self.c.fetchone()
         if ctx.invoked_subcommand is None:
             msg = """Usage: $roleadmin <subcommand> <arguments>
 
@@ -89,12 +109,14 @@ class RolePings(commands.Cog):
             roleadmin timer <time> - Set the time between role pings in minutes
             roleadmin enable/disable - Enable or disable role pings
             roleadmin setrole <role> - Set the role to ping
+            roleadmin minrank <rank> - Set the minimum rank to use the pingvc command
             
             Current Settings:
             Time: {} minutes
             Enabled: {}
             Role: {} ({})
-            """.format(time, bool(enabled), role, ctx.guild.get_role(role).name if role != 0 else '')
+            Minimum Level: {}
+            """.format(time, bool(enabled), role, ctx.guild.get_role(role).name if role != 0 else '', 'everyone' if role == 0 else get_role_of_rank(ctx.guild, min_rank))
             embed = discord.Embed(title='Role Admin', description=msg)
             embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
             await ctx.send(embed=embed)
@@ -147,8 +169,19 @@ class RolePings(commands.Cog):
         # Update the role ID in the database
         self.c.execute('UPDATE roleping SET role_id=? WHERE server_id=?', (role, ctx.guild.id))
         self.conn.commit()
-        await ctx.send('Role set to {}'.format(roleid.mention))
-        
+        await ctx.send('Role set to {}'.format(roleid.name))
+
+    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
+    @roleadmin.command()
+    async def minrank(self, ctx: commands.Context, rank: int):
+        # Validate rank, must be a positive integer
+        if rank < 0:
+            await ctx.send('Invalid rank')
+            return
+        # Update the minimum rank in the database
+        self.c.execute('UPDATE roleping SET min_rank=? WHERE server_id=?', (rank, ctx.guild.id))
+        self.conn.commit()
+        await ctx.send('Minimum rank set to {}'.format(get_role_of_rank(ctx.guild, rank)))
 
 
 async def setup(bot):
