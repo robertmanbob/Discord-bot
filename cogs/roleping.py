@@ -17,7 +17,7 @@ def check_server(serverid: int, c: sqlite3.Cursor, conn: sqlite3.Connection):
         return
     c.execute('SELECT * FROM roleping WHERE server_id=?', (serverid,))
     if c.fetchone() is None:
-        c.execute('INSERT INTO roleping VALUES (?, ?, ?, ?, ?)', (serverid, 60, 1, 0, 0))
+        c.execute('INSERT INTO roleping VALUES (?, ?, ?, ?, ?)', (serverid, 60, 0, 0, 0))
         conn.commit()
     # Add the server to the known servers set so we don't have to check the database again
     known_servers.add(serverid)
@@ -42,8 +42,8 @@ class RolePings(commands.Cog):
         # Check if the server is enabled and get the role ID and next ping time, and ping timer
         self.c.execute('SELECT rpenabled, role_id, next_roleping, timer_duration FROM roleping WHERE server_id=?', (ctx.guild.id,))
         enabled, role, next_ping_time, ping_timer = self.c.fetchone()
-        # If the server is disabled, don't ping the role
-        if enabled == 0:
+        # If the server is disabled or not in the database, don't ping the role
+        if enabled == 0 or enabled is None:
             await ctx.response.send_message('VC pings are disabled for this server.', ephemeral=True)
             return
         role = discord.utils.get(ctx.guild.roles, id=role)
