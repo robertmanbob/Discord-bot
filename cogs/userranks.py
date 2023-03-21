@@ -54,9 +54,9 @@ class UserCommands(commands.Cog):
     # This command will list all roles in the database
     # Not a slash command because it's not meant to be used by users
     # Bot owner or server admin only
-    @commands.command(name='listroles', description='List all roles in the database')
+    @commands.command(name='listranks', description='List all roles in the database')
     @commands.check_any(commands.is_owner(), commands.has_guild_permissions(administrator=True))
-    async def listroles(self, ctx: commands.Context):
+    async def listranks(self, ctx: commands.Context):
         self.c.execute('SELECT * FROM ranks')
         roles = self.c.fetchall()
         # Format the roles into a string, list the actual role name instead of the ID, and list the rank

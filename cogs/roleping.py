@@ -78,12 +78,10 @@ class RolePings(commands.Cog):
         # Finally, ping the role
         await ctx.response.send_message('Hey {}! {} has decided that it\'s time to chat!'.format(role.mention, ctx.user.mention), allowed_mentions=discord.AllowedMentions(roles=True))
 
-    @app_commands.command(name='listroles', description='List all roles and their IDs in the server')
-    async def listroles(self, ctx: discord.Interaction):
+    @commands.command(name='listroles', description='List all roles and their IDs in the server')
+    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
+    async def listroles(self, ctx: commands.Context):
         # If you're not the bot owner or owner of the server, you can't use this command
-        if not ctx.user.id == self.bot.owner_id and not ctx.user.id == ctx.guild.owner_id:
-            await ctx.response.send_message('You do not have permission to use this command.', ephemeral=True)
-            return
         roles = ctx.guild.roles
         role_string = ''
         for role in roles:
@@ -91,7 +89,7 @@ class RolePings(commands.Cog):
         # Save the entire role list to a file and send it as a file
         with open('roles.txt', 'w', encoding="utf-8") as f:
             f.write(role_string)
-        await ctx.response.send_message('Here\'s a list of all roles in this server:', file=discord.File('roles.txt'))
+        await ctx.send(file=discord.File('roles.txt'), content='Here\'s a list of all roles in this server and their IDs.')
 
 
     # Commands in the admin group are only available to the bot owner and server admins
