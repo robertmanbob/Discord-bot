@@ -28,11 +28,11 @@ class RolePings(commands.Cog):
         self.bot = bot
         
         # Confirm that the database exists, if not, throw an error
-        if not os.path.isfile('roleping.db'):
-            raise FileNotFoundError('roleping.db not found. Run createdb.py to create the database.')
+        if not os.path.isfile('database.db'):
+            raise FileNotFoundError('database.db not found. Run createdb.py to create the database.')
         
         # Connect to the database
-        self.conn = sqlite3.connect('roleping.db')
+        self.conn = sqlite3.connect('database.db')
         self.c = self.conn.cursor()
 
     @app_commands.command(name='pingvc', description='Ping the vc role! It\'s time to chat!')

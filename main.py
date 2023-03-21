@@ -135,7 +135,7 @@ async def update(ctx):
 @bot.command()
 @commands.is_owner()
 async def query(ctx: discord.Interaction, *, query: str):
-    conn = sqlite3.connect('roleping.db')
+    conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute(query)
     result = c.fetchall()
