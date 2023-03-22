@@ -5,7 +5,7 @@ from utility import get_role_of_rank
 
 def is_owner_or_admin():
     async def predicate(ctx: commands.Context):
-        return ctx.author.id == ctx.bot.owner_id or ctx.author.guild_permissions.manage_guild
+        return ctx.author.id == ctx.bot.is_owner() or ctx.author.guild_permissions.manage_guild
     return commands.check(predicate)
 
 def check_server(serverid: int, c: sqlite3.Cursor, conn: sqlite3.Connection):
