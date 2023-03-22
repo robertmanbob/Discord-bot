@@ -84,7 +84,7 @@ async def restart(ctx: commands.Context):
         await ctx.send('Restart cancelled')
         return
     await ctx.send('Restarting...')
-    bot.close()
+    await bot.close()
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 
