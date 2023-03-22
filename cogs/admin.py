@@ -44,7 +44,7 @@ class Admin(commands.Cog):
             embed = discord.Embed(title='Role Admin', description='Usage: $admin vcadmin <subcommand> <arguments>')
             embed.add_field(name='Subcommands:', value="""$admin vcadmin timer <time> - Set the time between role pings in minutes
             $admin vcadmin enable/disable - Enable or disable role pings
-            $admin vcadmin setrole <role> - Set the role to ping according to role ID
+            $admin vcadmin setrole <role ID> - Set the role to ping
             $admin vcadmin minrank <rank> - Set the minimum rank to use the /pingvc command""", inline=False)
             embed.add_field(name='Current Settings:', value="""Time: {} minutes
             Enabled: {}
