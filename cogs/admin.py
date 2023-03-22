@@ -3,11 +3,6 @@ import sqlite3
 from discord.ext import commands
 from utility import get_role_of_rank
 
-def is_owner_or_admin():
-    async def predicate(ctx: commands.Context):
-        return ctx.author.id == ctx.bot.is_owner or ctx.author.guild_permissions.manage_guild
-    return commands.check(predicate)
-
 def check_server(serverid: int, c: sqlite3.Cursor, conn: sqlite3.Connection):
     c.execute('SELECT * FROM roleping WHERE server_id=?', (serverid,))
     if c.fetchone() is None:
@@ -21,8 +16,9 @@ class Admin(commands.Cog):
         self.bot = bot
 
     # Admin command group
+    # Check if the user has "manage server" permission or is the owner of the bot
     @commands.group(name='admin', description='Admin commands', invoke_without_command=True)
-    @is_owner_or_admin()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def admin(self, ctx: commands.Context):
         embed = discord.Embed(title='Admin Commands', description='Here are the available admin commands:')
         embed.add_field(name='Subcommands', 
@@ -32,7 +28,7 @@ class Admin(commands.Cog):
 
     # vcadmin command sub-group
     @admin.group(name='vcadmin', description='VC ping admin commands and settings', invoke_without_command=True)
-    @is_owner_or_admin()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def vcadmin(self, ctx: commands.Context):
         check_server(ctx.guild.id, self.c, self.db)
         # Get the current settings from the database
@@ -70,8 +66,8 @@ class Admin(commands.Cog):
             embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
             await ctx.send(embed=embed)
 
-    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
     @vcadmin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def timer(self, ctx: commands.Context, time: int):
         # Validate time, must be a positive integer
         if time <= 0:
@@ -91,24 +87,24 @@ class Admin(commands.Cog):
 
         await ctx.send('Timer set to {} minutes.'.format(time))
 
-    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
     @vcadmin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def enable(self, ctx: commands.Context):
         # Update the enabled status in the database
         self.c.execute('UPDATE roleping SET rpenabled=1 WHERE server_id=?', (ctx.guild.id,))
         self.db.commit()
         await ctx.send('Role pings enabled')
 
-    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
     @vcadmin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def disable(self, ctx: commands.Context):
         # Update the enabled status in the database
         self.c.execute('UPDATE roleping SET rpenabled=0 WHERE server_id=?', (ctx.guild.id,))
         self.db.commit()
         await ctx.send('Role pings disabled')
     
-    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
     @vcadmin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def setrole(self, ctx: commands.Context, role: str):
         roleid = ctx.guild.get_role(int(role))
         if roleid is None:
@@ -120,8 +116,8 @@ class Admin(commands.Cog):
         self.db.commit()
         await ctx.send('Role set to {}'.format(roleid.name))
 
-    @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
     @vcadmin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def minrank(self, ctx: commands.Context, rank: int):
         # Validate rank, must be a positive integer
         if rank < 0:

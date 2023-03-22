@@ -56,18 +56,6 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
-# Check if the user is a bot owner or has manage server permission
-def is_owner_or_admin():
-    async def predicate(ctx: commands.Context):
-        return ctx.author.id == ctx.bot.is_owner or ctx.author.guild_permissions.manage_guild
-    return commands.check(predicate)
-
-# Test the above decorator
-@bot.command()
-@is_owner_or_admin()
-async def test(ctx):
-    await ctx.send('Success')
-
 # Restart the bot, bot owner only. Not a slash command.
 @bot.command()
 @commands.is_owner()
@@ -160,7 +148,7 @@ async def remove(ctx, cog: str):
 # Panic command, bot owner or server admins. Not a slash command.
 # This will log the time, date, and optional message of the panic in a file, and then exit the bot.
 @bot.command()
-@is_owner_or_admin()
+@commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
 async def panic(ctx, *, message: typing.Optional[str] = None):
     with open('panic.txt', 'a') as f:
         f.write('Panic at {}:\n{}\n'.format(datetime.datetime.now(), message))

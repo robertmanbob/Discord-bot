@@ -15,7 +15,7 @@ class UserCommands(commands.Cog):
     # Not a slash command because it's not meant to be used by users
     # Bot owner or server admin only
     @commands.command(name='addrole', description='Add a role to the database with the specified rank')
-    @commands.check_any(commands.is_owner(), commands.has_guild_permissions(administrator=True))
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def addrole(self, ctx: commands.Context, role: str, rank: int):
         # Make sure the role actually exists
         if ctx.guild.get_role(int(role)) is None:
@@ -35,7 +35,7 @@ class UserCommands(commands.Cog):
     # Not a slash command because it's not meant to be used by users
     # Bot owner or server admin only
     @commands.command(name='removerole', description='Remove a role from the database')
-    @commands.check_any(commands.is_owner(), commands.has_guild_permissions(administrator=True))
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def removerole(self, ctx: commands.Context, role: str):
         # Make sure the role actually exists
         if ctx.guild.get_role(int(role)) is None:
@@ -49,7 +49,7 @@ class UserCommands(commands.Cog):
     # Not a slash command because it's not meant to be used by users
     # Bot owner or server admin only
     @commands.command(name='listranks', description='List all roles in the database')
-    @commands.check_any(commands.is_owner(), commands.has_guild_permissions(administrator=True))
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def listranks(self, ctx: commands.Context):
         self.c.execute('SELECT * FROM ranks')
         roles = self.c.fetchall()
