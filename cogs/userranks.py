@@ -1,11 +1,5 @@
-import discord
-import time
 import sqlite3
-import os
-import sys
-from discord import app_commands
 from discord.ext import commands
-from utility import role_rank, role_at_least, user_is_at_least
 
 # Database format
 # server_id, role_id, rank
