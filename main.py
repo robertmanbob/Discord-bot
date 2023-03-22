@@ -59,7 +59,7 @@ bot = MyBot()
 # Check if the user is a bot owner or has manage server permission
 def is_owner_or_admin():
     async def predicate(ctx: commands.Context):
-        return ctx.author.id == ctx.bot.is_owner() or ctx.author.guild_permissions.manage_guild
+        return ctx.author.id == ctx.bot.is_owner or ctx.author.guild_permissions.manage_guild
     return commands.check(predicate)
 
 # Test the above decorator
