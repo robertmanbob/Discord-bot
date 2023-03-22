@@ -26,6 +26,9 @@ def user_is_at_least(user: discord.Member, requirement: int) -> bool:
 
 def get_role_of_rank(guild: discord.Guild, rank: int) -> int:
     """Returns the role of a specified rank"""
+    # If the rank is 0, return "0"
+    if rank == 0:
+        return 0
     db = sqlite3.connect('database.db')
     c = db.cursor()
     c.execute('SELECT * FROM ranks WHERE server_id=? AND rank=?', (guild.id, rank))
