@@ -6,6 +6,7 @@ import typing
 import discord
 import git
 import sqlite3 # Crying emoji here
+import asyncio
 from discord.ext import commands
 
 # Read the secret.ini file for bot token and config.ini for enabled cogs
@@ -66,10 +67,22 @@ def is_owner_or_admin():
 async def test(ctx):
     await ctx.send('Success')
 
-# Restart the bot, bot owner only. Not a slash command. Make sure the bot is running in a screen or tmux session.
+# Restart the bot, bot owner only. Not a slash command.
 @bot.command()
 @commands.is_owner()
-async def restart(ctx):
+async def restart(ctx: commands.Context):
+    # Verify that the bot should restart
+    await ctx.send('Are you sure you want to restart?')
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel
+    try:
+        msg = await bot.wait_for('message', check=check, timeout=30)
+    except asyncio.TimeoutError:
+        await ctx.send('Restart cancelled')
+        return
+    if msg.content.lower() != 'yes':
+        await ctx.send('Restart cancelled')
+        return
     await ctx.send('Restarting...')
     bot.close()
     os.execl(sys.executable, sys.executable, *sys.argv)
