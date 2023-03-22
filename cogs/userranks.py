@@ -51,8 +51,12 @@ class UserCommands(commands.Cog):
     @commands.command(name='listranks', description='List all roles in the database')
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def listranks(self, ctx: commands.Context):
-        self.c.execute('SELECT * FROM ranks')
+        self.c.execute('SELECT * FROM ranks WHERE server_id=?', (ctx.guild.id, ))
         roles = self.c.fetchall()
+        # If no roles are found, state that
+        if len(roles) == 0:
+            await ctx.send('No roles found')
+            return
         # Format the roles into a string, list the actual role name instead of the ID, and list the rank
         roles = '\n'.join([f'{ctx.guild.get_role(role[1]).name}: {role[2]}' for role in roles])
         await ctx.send(f'Roles:\n{roles}')
