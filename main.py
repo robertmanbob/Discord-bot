@@ -1,4 +1,5 @@
 import os
+import sys
 import configparser
 import datetime
 import typing
@@ -52,6 +53,26 @@ class MyBot(commands.Bot):
 
 
 bot = MyBot()
+
+# Check if the user is a bot owner or has manage server permission
+def is_owner_or_admin():
+    async def predicate(ctx: commands.Context):
+        return ctx.author.id == ctx.bot.owner_id or ctx.author.guild_permissions.manage_guild
+    return commands.check(predicate)
+
+# Test the above decorator
+@bot.command()
+@commands.check(is_owner_or_admin())
+async def test(ctx):
+    await ctx.send('Success')
+
+# Restart the bot, bot owner only. Not a slash command. Make sure the bot is running in a screen or tmux session.
+@bot.command()
+@commands.is_owner()
+async def restart(ctx):
+    await ctx.send('Restarting...')
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
 
 # Test ping command
 @bot.tree.command(name='ping', description='Pong!')
