@@ -114,7 +114,7 @@ class RolePings(commands.Cog):
             Enabled: {}
             Role: {} ({})
             Minimum Level: {}
-            """.format(time, bool(enabled), role, ctx.guild.get_role(role).name if role != 0 else '', 'everyone' if role == 0 else get_role_of_rank(ctx.guild, min_rank))
+            """.format(time, bool(enabled), role, ctx.guild.get_role(role).name if role != 0 else '', 'everyone' if min_rank == 0 else get_role_of_rank(ctx.guild, min_rank))
             embed = discord.Embed(title='Role Admin', description=msg)
             embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
             await ctx.send(embed=embed)
