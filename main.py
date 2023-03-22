@@ -7,7 +7,7 @@ import git
 import sqlite3 # Crying emoji here
 from discord.ext import commands
 
-# Read the secret.ini file for bot token and owner ID
+# Read the secret.ini file for bot token and config.ini for enabled cogs
 secret = configparser.ConfigParser()
 secret.read('secret.ini')
 token = secret['DEFAULT']['token']
