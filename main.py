@@ -63,7 +63,7 @@ def is_owner_or_admin():
 
 # Test the above decorator
 @bot.command()
-@commands.check(is_owner_or_admin())
+@is_owner_or_admin()
 async def test(ctx):
     await ctx.send('Success')
 
@@ -160,7 +160,7 @@ async def remove(ctx, cog: str):
 # Panic command, bot owner or server admins. Not a slash command.
 # This will log the time, date, and optional message of the panic in a file, and then exit the bot.
 @bot.command()
-@commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
+@is_owner_or_admin()
 async def panic(ctx, *, message: typing.Optional[str] = None):
     with open('panic.txt', 'a') as f:
         f.write('Panic at {}:\n{}\n'.format(datetime.datetime.now(), message))
