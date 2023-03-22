@@ -35,6 +35,7 @@ class MyBot(commands.Bot):
         await bot.tree.sync()
     
     async def on_ready(self):
+        self.remove_command('help')
         print('Logged in as')
         print(self.user.name)
         print(self.user.id)
