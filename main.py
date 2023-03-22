@@ -71,6 +71,7 @@ async def test(ctx):
 @commands.is_owner()
 async def restart(ctx):
     await ctx.send('Restarting...')
+    await bot.close()
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 
