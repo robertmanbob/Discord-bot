@@ -24,6 +24,12 @@ class Admin(commands.Cog):
         embed.add_field(name='Subcommands', 
                         value="""$admin vcadmin - Displays VC ping admin commands and current settings""", 
                         inline=False)
+        embed.add_field(name='Dev Commands', 
+                        value="""$addrole <role ID> <rank> - Adds a role to the database with a specified rank
+                        $removerole <role ID> - Remove a role from the database
+                        $listranks - List all roles and their rank in the database
+                        $listroles - List all roles and their ID in the server""", 
+                        inline=False)
         await ctx.send(embed=embed)
 
     # vcadmin command sub-group
@@ -35,20 +41,6 @@ class Admin(commands.Cog):
         self.c.execute('SELECT timer_duration, rpenabled, role_id, min_rank FROM roleping WHERE server_id=?', (ctx.guild.id,))
         time, enabled, role, min_rank = self.c.fetchone()
         if ctx.invoked_subcommand is None:
-            # msg = """Usage: $admin vcadmin <subcommand> <arguments>
-
-            # Subcommands:
-            # vcadmin timer <time> - Set the time between role pings in minutes
-            # vcadmin enable/disable - Enable or disable role pings
-            # vcadmin setrole <role> - Set the role to ping
-            # vcadmin minrank <rank> - Set the minimum rank to use the pingvc command
-            
-            # Current Settings:
-            # Time: {} minutes
-            # Enabled: {}
-            # Role: {} ({})
-            # Minimum Level: {}
-            # """.format(time, bool(enabled), role, ctx.guild.get_role(role).name if role != 0 else '', 'everyone' if min_rank == 0 else get_role_of_rank(ctx.guild, min_rank))
             embed = discord.Embed(title='Role Admin', description='Usage: $admin vcadmin <subcommand> <arguments>')
             embed.add_field(name='Subcommands:', value="""$admin vcadmin timer <time> - Set the time between role pings in minutes
             $admin vcadmin enable/disable - Enable or disable role pings
