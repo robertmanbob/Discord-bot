@@ -69,6 +69,18 @@ async def reload(ctx, cog: str):
     except Exception as e:
         await ctx.send('Failed to reload cog: {}'.format(e))
 
+# Reload all cogs, bot owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def reloadall(ctx):
+    for cog in cogs:
+        try:
+            await bot.unload_extension(cog)
+            await bot.load_extension(cog)
+            await ctx.send('Reloaded {}'.format(cog))
+        except Exception as e:
+            await ctx.send('Failed to reload cog: {}'.format(e))
+
 # Resync all slash commands, bot owner only. Not a slash command.
 @bot.command()
 @commands.is_owner()
