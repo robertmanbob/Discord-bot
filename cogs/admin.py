@@ -129,7 +129,7 @@ class Admin(commands.Cog):
         # Check whether the server is in the database or not
         self.c.execute('SELECT EXISTS(SELECT 1 FROM suggest WHERE server_id=?)', (ctx.guild.id,))
         enabled = self.c.fetchone()[0]
-        if enabled is None:
+        if not enabled:
             self.c.execute('INSERT INTO suggest VALUES (?, 0, 0)', (ctx.guild.id,))
             self.db.commit()
             # Let the user know that the server was added to the database and re-run the command
