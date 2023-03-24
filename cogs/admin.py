@@ -22,7 +22,8 @@ class Admin(commands.Cog):
     async def admin(self, ctx: commands.Context):
         embed = discord.Embed(title='Admin Commands', description='Here are the available admin commands:')
         embed.add_field(name='Subcommands', 
-                        value="""$admin vcadmin - Displays VC ping admin commands and current settings""", 
+                        value="""$admin vcadmin - Displays VC ping admin commands and current settings
+                        $admin suggest - Displays suggestion admin commands and current settings""", 
                         inline=False)
         embed.add_field(name='Dev Commands', 
                         value="""$addrole <role ID> <rank> - Adds a role to the database with a specified rank
@@ -119,6 +120,58 @@ class Admin(commands.Cog):
         self.c.execute('UPDATE roleping SET min_rank=? WHERE server_id=?', (rank, ctx.guild.id))
         self.db.commit()
         await ctx.send('Minimum rank set to {}'.format(get_role_of_rank(ctx.guild, rank)))
+
+    # Suggest admin command sub-group
+    @admin.group(name='suggest', description='Suggest admin commands and settings', invoke_without_command=True)
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def suggest(self, ctx: commands.Context):
+        # Suggest db table: server_id, enabled, channel_id
+        # Check whether the server is in the database or not
+        self.c.execute('SELECT enabled FROM suggest WHERE server_id=?', (ctx.guild.id,))
+        enabled = self.c.fetchone()[0]
+        if enabled is None:
+            self.c.execute('INSERT INTO suggest VALUES (?, 0, 0)', (ctx.guild.id,))
+            self.db.commit()
+            # Let the user know that the server was added to the database and re-run the command
+            await ctx.send('Server added to database, please re-run the command')
+            return
+        # Get the channel ID from the database
+        self.c.execute('SELECT channel_id FROM suggest WHERE server_id=?', (ctx.guild.id,))
+        channel = self.c.fetchone()[0]
+        # Create an embed to display the current settings
+        embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
+        embed.add_field(name='Subcommands:', value="""$admin suggest enable/disable - Enable or disable suggestions
+        $admin suggest setchannel- Set the channel to send suggestions to the current channel""", inline=False)
+        embed.add_field(name='Current Settings:', value="""Enabled: {}
+        Channel: {} ({})""".format(bool(enabled),
+                                    channel,
+                                    ctx.guild.get_channel(channel).name if channel != 0 else ''), inline=False)
+        embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
+        await ctx.send(embed=embed)
+
+    @suggest.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def enable(self, ctx: commands.Context):
+        # Update the enabled status in the database
+        self.c.execute('UPDATE suggest SET enabled=1 WHERE server_id=?', (ctx.guild.id,))
+        self.db.commit()
+        await ctx.send('Suggestions enabled')
+
+    @suggest.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def disable(self, ctx: commands.Context):
+        # Update the enabled status in the database
+        self.c.execute('UPDATE suggest SET enabled=0 WHERE server_id=?', (ctx.guild.id,))
+        self.db.commit()
+        await ctx.send('Suggestions disabled')
+
+    @suggest.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def setchannel(self, ctx: commands.Context):
+        # Update the channel ID in the database to the current channel
+        self.c.execute('UPDATE suggest SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
+        self.db.commit()
+        await ctx.send('Suggestions channel set to {}'.format(ctx.channel.name))
         
 
 async def setup(bot: commands.Bot):
