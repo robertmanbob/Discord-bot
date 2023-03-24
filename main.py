@@ -165,7 +165,7 @@ async def update(ctx):
     # Print that we updated the repo and the current commit
     await ctx.send('Updated to commit {}'.format(repo.head.object.hexsha))
 
-# Connect to the desired database, run a query, and return the result
+# Connect to the database, run a query, and return the result
 # Owner only, not a slash command
 @bot.command()
 @commands.is_owner()
@@ -174,6 +174,7 @@ async def query(ctx: discord.Interaction, *, query: str):
     c = conn.cursor()
     c.execute(query)
     result = c.fetchall()
+    conn.commit()
     conn.close()
     await ctx.send('Result: {}'.format(result))
     
