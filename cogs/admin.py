@@ -31,6 +31,9 @@ class Admin(commands.Cog):
                         $listranks - List all roles and their rank in the database
                         $listroles - List all roles and their ID in the server""", 
                         inline=False)
+        embed.add_field(name='Other Commands',
+                        value="""$panic <*optional* message>- Logs a panic message and exits the bot""", 
+                        inline=False)
         await ctx.send(embed=embed)
 
     # vcadmin command sub-group
