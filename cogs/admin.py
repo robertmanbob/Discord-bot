@@ -127,7 +127,7 @@ class Admin(commands.Cog):
     async def suggest(self, ctx: commands.Context):
         # Suggest db table: server_id, enabled, channel_id
         # Check whether the server is in the database or not
-        self.c.execute('SELECT enabled FROM suggest WHERE server_id=?', (ctx.guild.id,))
+        self.c.execute('SELECT EXISTS(SELECT 1 FROM suggest WHERE server_id=?)', (ctx.guild.id,))
         enabled = self.c.fetchone()[0]
         if enabled is None:
             self.c.execute('INSERT INTO suggest VALUES (?, 0, 0)', (ctx.guild.id,))
