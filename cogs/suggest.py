@@ -40,7 +40,7 @@ class Suggest(commands.Cog):
         suggestion_channel = self.bot.get_channel(suggestion_channel)
 
         # Create an embed for the suggestion
-        embed = discord.Embed(title='Suggestion', description=suggestion, color=0x00ff00)
+        embed = discord.Embed(title='Suggestion', description=suggestion, color=ctx.user.color)
         embed.set_author(name=ctx.user.name, icon_url=ctx.user.avatar.url)
         embed.set_footer(text=f'User ID: {ctx.user.id}')
 
