@@ -141,7 +141,7 @@ class Admin(commands.Cog):
         # Create an embed to display the current settings
         embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
         embed.add_field(name='Subcommands:', value="""$admin suggest enable/disable - Enable or disable suggestions
-        $admin suggest setchannel- Set the channel to send suggestions to the current channel""", inline=False)
+        $admin suggest setchannel- Set the channel to send suggestions to""", inline=False)
         embed.add_field(name='Current Settings:', value="""Enabled: {}
         Channel: {} ({})""".format(bool(enabled),
                                     channel,
