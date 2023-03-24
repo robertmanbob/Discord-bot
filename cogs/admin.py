@@ -128,16 +128,16 @@ class Admin(commands.Cog):
         # Suggest db table: server_id, enabled, channel_id
         # Check whether the server is in the database or not
         self.c.execute('SELECT EXISTS(SELECT 1 FROM suggest WHERE server_id=?)', (ctx.guild.id,))
-        enabled = self.c.fetchone()[0]
-        if not enabled:
+        exists = self.c.fetchone()[0]
+        if not exists:
             self.c.execute('INSERT INTO suggest VALUES (?, 0, 0)', (ctx.guild.id,))
             self.db.commit()
             # Let the user know that the server was added to the database and re-run the command
             await ctx.send('Server added to database, please re-run the command')
             return
-        # Get the channel ID from the database
-        self.c.execute('SELECT channel_id FROM suggest WHERE server_id=?', (ctx.guild.id,))
-        channel = self.c.fetchone()[0]
+        # Get the channel ID and enabled status from the database
+        self.c.execute('SELECT enabled, channel_id FROM suggest WHERE server_id=?', (ctx.guild.id,))
+        enabled, channel = self.c.fetchone()
         # Create an embed to display the current settings
         embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
         embed.add_field(name='Subcommands:', value="""$admin suggest enable/disable - Enable or disable suggestions
