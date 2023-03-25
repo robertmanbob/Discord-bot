@@ -23,7 +23,8 @@ class Admin(commands.Cog):
         embed = discord.Embed(title='Admin Commands', description='Here are the available admin commands:')
         embed.add_field(name='Subcommands', 
                         value="""$admin vcadmin - Displays VC ping admin commands and current settings
-                        $admin suggest - Displays suggestion admin commands and current settings""", 
+                        $admin suggest - Displays suggestion admin commands and current settings
+                        $admin welcome - Displays welcome admin commands and current settings""", 
                         inline=False)
         embed.add_field(name='Dev Commands', 
                         value="""$addrole <role ID> <rank> - Adds a role to the database with a specified rank
@@ -135,9 +136,7 @@ class Admin(commands.Cog):
         if not exists:
             self.c.execute('INSERT INTO suggest VALUES (?, 0, 0)', (ctx.guild.id,))
             self.db.commit()
-            # Let the user know that the server was added to the database and re-run the command
-            await ctx.send('Server added to database, please re-run the command')
-            return
+            await ctx.send('Server added to database')
         # Get the channel ID and enabled status from the database
         self.c.execute('SELECT enabled, channel_id FROM suggest WHERE server_id=?', (ctx.guild.id,))
         enabled, channel = self.c.fetchone()
@@ -175,6 +174,58 @@ class Admin(commands.Cog):
         self.c.execute('UPDATE suggest SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
         self.db.commit()
         await ctx.send('Suggestions channel set to {}'.format(ctx.channel.name))
+
+    # Group for the welcome message settings
+    @admin.group(name='welcome', description='Welcome message settings', invoke_without_command=True)
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def welcome(self, ctx: commands.Context):
+        # Welcome db table: server_id, wenabled, channel_id
+        # Check whether the server is in the database or not
+        self.c.execute('SELECT EXISTS(SELECT 1 FROM welcome WHERE server_id=?)', (ctx.guild.id,))
+        exists = self.c.fetchone()[0]
+        if not exists:
+            self.c.execute('INSERT INTO welcome VALUES (?, 0, 0)', (ctx.guild.id,))
+            self.db.commit()
+            # Let the user know that the server was added to the database and re-run the command
+            await ctx.send('Server added to database')
+        
+        # Get the channel ID and enabled status from the database
+        self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (ctx.guild.id,))
+        enabled, channel = self.c.fetchone()
+        # Create an embed to display the current settings
+        embed = discord.Embed(title='Welcome Admin', description='Usage: $admin welcome <subcommand> <arguments>')
+        embed.add_field(name='Subcommands:', value="""$admin welcome enable/disable - Enable or disable welcome messages
+        $admin welcome setchannel - Set the channel to send welcome messages to""", inline=False)
+        embed.add_field(name='Current Settings:', value="""Enabled: {}
+        Channel: {} ({})""".format(bool(enabled),
+                                    channel,
+                                    ctx.guild.get_channel(channel).name if channel != 0 else ''), inline=False)
+        embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
+        await ctx.send(embed=embed)
+
+    @welcome.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def enable(self, ctx: commands.Context):
+        # Update the enabled status in the database
+        self.c.execute('UPDATE welcome SET wenabled=1 WHERE server_id=?', (ctx.guild.id,))
+        self.db.commit()
+        await ctx.send('Welcome messages enabled')
+
+    @welcome.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def disable(self, ctx: commands.Context):
+        # Update the enabled status in the database
+        self.c.execute('UPDATE welcome SET wenabled=0 WHERE server_id=?', (ctx.guild.id,))
+        self.db.commit()
+        await ctx.send('Welcome messages disabled')
+
+    @welcome.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def setchannel(self, ctx: commands.Context):
+        # Update the channel ID in the database to the current channel
+        self.c.execute('UPDATE welcome SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
+        self.db.commit()
+        await ctx.send('Welcome messages channel set to {}'.format(ctx.channel.name))
         
 
 async def setup(bot: commands.Bot):
