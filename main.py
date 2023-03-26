@@ -22,7 +22,8 @@ class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(
             command_prefix='$',
-            intents=discord.Intents.all())
+            intents=discord.Intents.all(),
+            owner_id=168392772506746880)
         
     async def setup_hook(self):
         # Load cogs
