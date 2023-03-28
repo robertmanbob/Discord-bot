@@ -103,8 +103,11 @@ class Silly(commands.Cog):
             for i in range(random.randint(0, 4)):
                 output += random.choice(zalgo_under)
         
-        # Delete the original message and send the zalgo text
-        await ctx.message.delete()
+        # Try to delete the original message and send the zalgo text
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
         await ctx.send(output)
         
 
