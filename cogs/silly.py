@@ -1,5 +1,6 @@
 import discord
 import sqlite3
+import random
 from discord.ext import commands
 
 class Silly(commands.Cog):
@@ -61,6 +62,50 @@ class Silly(commands.Cog):
         self.c.execute('DELETE FROM namereply WHERE user_name = ?', (name.lower(),))
         self.db.commit()
         await ctx.send('Removed name {}'.format(name.lower()))
+
+    # Bot owner only, not a slash command
+    # Zalgo text generator
+    @commands.command()
+    @commands.is_owner()
+    async def zalgo(self, ctx: commands.Context, *, text: str):
+        """Zalgo text generator"""
+        # Define the zalgo characters
+        zalgo_over = [
+            '\u0300', '\u0301', '\u0302', '\u0303', '\u0304',
+            '\u0305', '\u0306', '\u0307', '\u0308', '\u0309',
+            '\u030a', '\u030b', '\u030c', '\u030d', '\u030e',
+            '\u030f', '\u0310', '\u0311', '\u0312', '\u0313',
+            '\u0314', '\u0315', '\u031a', '\u031b', '\u033c',
+            '\u033e', '\u033f', '\u0340', '\u0341', '\u0342',
+            '\u0343', '\u0344', '\u034a', '\u0346', '\u034b',
+            '\u034c', '\u0350', '\u0351', '\u0352', '\u0357',
+            '\u0358', '\u035b', '\u0360', '\u035d', '\u035e',
+            '\u0361'
+        ]
+        zalgo_under = [
+            '\u0316', '\u0317', '\u0318', '\u0319', '\u031c',
+            '\u031d', '\u031e', '\u031f', '\u0320', '\u0321',
+            '\u0322', '\u0323', '\u0324', '\u0325', '\u0326',
+            '\u0327', '\u0328', '\u0329', '\u032a', '\u032b',
+            '\u032c', '\u032d', '\u032e', '\u032f', '\u0330',
+            '\u0331', '\u0332', '\u0333', '\u0339', '\u033a',
+            '\u033b', '\u033c', '\u0345', '\u0347', '\u0348',
+            '\u0349', '\u034d', '\u034e', '\u0353', '\u0354',
+            '\u0355', '\u0356', '\u0359', '\u035a', '\u035c',
+            '\u035f', '\u0362'
+        ]
+        output = ''
+        # Add zalgo characters to the text
+        for char in text:
+            output += char
+            for i in range(random.randint(0, 4)):
+                output += random.choice(zalgo_over)
+            for i in range(random.randint(0, 4)):
+                output += random.choice(zalgo_under)
+        
+        # Delete the original message and send the zalgo text
+        await ctx.message.delete()
+        await ctx.send(output)
         
 
 async def setup(bot):
