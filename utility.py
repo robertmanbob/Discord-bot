@@ -3,6 +3,28 @@ import sqlite3
 import requests
 from PIL import Image, ImageFont, ImageDraw
 
+# Yes or No view + buttons
+class YesNoView(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__()
+        self.ctx = ctx
+        self.value = None
+
+    @discord.ui.button(label='Yes', style=discord.ButtonStyle.green)
+    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = True
+        # disable the buttons
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @discord.ui.button(label='No', style=discord.ButtonStyle.red)
+    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = False
+        # disable the buttons
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
 
 def role_rank(role: int) -> int:
     """Queries the database for the rank of a role, returns 0 if not found"""
