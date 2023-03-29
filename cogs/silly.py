@@ -149,6 +149,15 @@ class Silly(commands.Cog):
     #     except discord.Forbidden:
     #         # If the bot doesn't have permission to change the nickname, let them know
     #         await ctx.channel.send(f'I don\'t have permission to change your nickname, but it would have been {reply.content}.')
+
+    # Bot owner or specified person, not a slash command
+    # Sends a lemon man image
+    @commands.command()
+    async def lemonman(self, ctx: commands.Context):
+        if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
+            await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
+
+        
         
     
         
