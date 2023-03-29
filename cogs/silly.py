@@ -153,7 +153,7 @@ class Silly(commands.Cog):
     # Bot owner or specified person, not a slash command
     # Sends a lemon man image
     @commands.command()
-    async def lemonman(self, ctx: commands.Context):
+    async def nona(self, ctx: commands.Context):
         if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
             await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
 
