@@ -1,6 +1,8 @@
 import discord
 import sqlite3
 import requests
+import random
+import os
 from PIL import Image, ImageFont, ImageDraw
 
 # Yes or No view + buttons
@@ -61,11 +63,17 @@ def get_role_of_rank(guild: discord.Guild, rank: int) -> int:
         raise ValueError('Role not found')
     return guild.get_role(result[1])
 
-def generate_welcome_card(avatar_url: str, name: str) -> str:
+def generate_welcome_card(avatar_url: str, name: str, gif = 0) -> str:
     """Generates a welcome card, saving it to welcome.png and returning the path"""
     # Request the avatar, convert it to RGB
     avatar = Image.open(requests.get(avatar_url, stream=True).raw).convert("RGBA")
-    welcome_gif = Image.open("welcome.gif")
+
+    # if gif is 0, use the select a random gif from the gifs folder
+    if gif == 0:
+        welcome_gif = Image.open(f"gifs/{random.choice(os.listdir('gifs'))}")
+    else:
+        welcome_gif = Image.open(f"gifs/{gif}.gif")
+
 
     # Create same size alpha layer with circle and apply to avatar
     alpha = Image.new("L", avatar.size, 0)
@@ -85,7 +93,7 @@ def generate_welcome_card(avatar_url: str, name: str) -> str:
     
 
     # create a banner image that is just a transparent image
-    banner = Image.new("RGBA", (500, 140), 0)
+    banner = Image.new("RGBA", (510, 140), 0)
     overlay = Image.new("RGBA", banner.size, 0)
     overlay.paste(outline, (10, 10))
     banner.alpha_composite(overlay)
@@ -105,6 +113,10 @@ def generate_welcome_card(avatar_url: str, name: str) -> str:
 
     # Paste the text into the banner
     banner.paste(textimg, (135, -110))
+
+    # If the banner is bigger than the gif, resize it so that it proportionally fits
+    if banner.size[0] > welcome_gif.size[0]:
+        banner = banner.resize((welcome_gif.size[0], round(welcome_gif.size[0]/banner.size[0]*banner.size[1])), resample=Image.LANCZOS)
     
     gen_welcome = []
     # Open each frame of the welcome gif, paste the banner, save to a new frame
@@ -114,7 +126,7 @@ def generate_welcome_card(avatar_url: str, name: str) -> str:
         new_frame.paste(welcome_gif)
         new_frame.paste(banner, (0, 0), banner)
         new_frame = new_frame.convert(mode='P', palette=Image.ADAPTIVE)
-        cropped_frame = new_frame.crop((0, 0, 500+20, 140))
+        cropped_frame = new_frame.crop((0, 0, banner.size[0], banner.size[1]))
         gen_welcome.append(cropped_frame)
 
 
