@@ -1,1 +1,2 @@
-Standardize to either passing objects or IDs around. This is getting annoying.
+Standardize to either passing objects or IDs around.
+f format all strings
