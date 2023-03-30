@@ -64,9 +64,10 @@ def get_role_of_rank(guild: discord.Guild, rank: int) -> int:
 def generate_welcome_card(avatar_url: str, name: str) -> str:
     """Generates a welcome card, saving it to welcome.png and returning the path"""
     # Request the avatar, convert it to RGB
-    avatar = Image.open(requests.get(avatar_url, stream=True).raw).convert("RGB")
+    avatar = Image.open(requests.get(avatar_url, stream=True).raw).convert("RGBA")
+    welcome_gif = Image.open("welcome.gif")
 
-    # Create same size alpha layer with circle, and apply to avatar
+    # Create same size alpha layer with circle, gaussian blur, and apply to avatar
     alpha = Image.new("L", avatar.size, 0)
     draw = ImageDraw.Draw(alpha)
     draw.ellipse([(0, 0), avatar.size], fill=255)
@@ -75,9 +76,9 @@ def generate_welcome_card(avatar_url: str, name: str) -> str:
     avatar = avatar.resize((120, 120))
 
     # create a banner image that is just a transparent image
-    banner = Image.new("RGBA", (500, 120), 0)
+    banner = Image.new("RGBA", (500, 140), 0)
     overlay = Image.new("RGBA", banner.size, 0)
-    overlay.paste(avatar, (0, 0))
+    overlay.paste(avatar, (10, 10))
     banner.alpha_composite(overlay)
     draw = ImageDraw.Draw(banner)
 
@@ -94,7 +95,26 @@ def generate_welcome_card(avatar_url: str, name: str) -> str:
     textimg = textimg.resize((375, 375), resample=Image.LANCZOS)
 
     # Paste the text into the banner
-    banner.paste(textimg, (125, -125))
-    save_path = "welcome.png"
-    banner.save(save_path)
-    return save_path
+    banner.paste(textimg, (135, -115))
+    
+    gen_welcome = []
+    # Open each frame of the welcome gif, paste the banner, save to a new frame
+    for frame in range(welcome_gif.n_frames):
+        welcome_gif.seek(frame)
+        new_frame = Image.new("RGBA", welcome_gif.size, 0)
+        new_frame.paste(welcome_gif)
+        new_frame.paste(banner, (0, 0), banner)
+        new_frame = new_frame.convert(mode='P', palette=Image.ADAPTIVE)
+        cropped_frame = new_frame.crop((0, 0, 500+20, 140))
+        gen_welcome.append(cropped_frame)
+
+
+
+    # Save the frames to a new gif
+    gen_welcome[0].save(f"welcome_{name}.gif", save_all=True, append_images=gen_welcome[1:], loop=0, duration=welcome_gif.info['duration'], disposal=1, optimize=True)
+
+    # Return the path to the first frame
+    print(f"Welcome card generated for {name}")
+    return f"welcome_{name}.gif"
+
+    

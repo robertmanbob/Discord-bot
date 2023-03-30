@@ -1,5 +1,6 @@
 import discord
 import sqlite3
+import os
 from discord.ext import commands
 from utility import generate_welcome_card
 
@@ -29,13 +30,26 @@ class Welcome(commands.Cog):
         # If the channel is None, return
         if channel is None:
             return
-        # If the user does not have an avatar, return
-        if member.avatar is None:
-            return
-        # Generate the welcome card
-        path = generate_welcome_card(member.avatar.url, member.name)
-        # Send the welcome card to the designated channel in an embed
-        await channel.send(embed=discord.Embed().set_image(url=f"attachment://{path}"), file=discord.File(path))
+        # Set the bot to typing in the channel
+        async with channel.typing():
+            # Attempt to make and send the welcome card, deleting it if we catch an error
+            try:
+                # Generate the welcome card. If the user has no avatar, use the default avatar
+                path = generate_welcome_card(member.avatar.url if member.avatar else "https://cdn.discordapp.com/embed/avatars/0.png", member.name)
+                # Send the welcome card to the designated channel in an embed
+                embed = discord.Embed()
+                embed.set_image(url=f"attachment://{path}")
+                embed.title = f"Welcome to {member.guild.name}, {member.name}!"
+                embed.description = f"Please read the rules, get roles in {member.guild.get_channel(780057871517614091).mention}, and enjoy your stay!"
+                await channel.send(embed=embed, file=discord.File(path))
+                # Delete the welcome card
+                os.remove(path)
+            except Exception as e:
+                # Delete the welcome card if it exists
+                if os.path.exists(path):
+                    os.remove(path)
+                # DM the owner of the bot with the error
+                await self.bot.get_user(self.bot.owner_id).send(f"Error in welcome card generation: {e}")
 
     # Test the listener, admin or owner only
     @commands.command()
