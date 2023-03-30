@@ -83,7 +83,7 @@ def generate_welcome_card(avatar_url: str, name: str) -> str:
     draw = ImageDraw.Draw(banner)
 
     # Find the size of the text and create a text image
-    text_in_image=f"Welcome to the server, {name}!"
+    text_in_image=f"{name} has joined, don't leave and be stupid!"
     font = ImageFont.truetype("font.ttf", 60)
     textimg = Image.new("RGBA", (1, 1), 0)
     textdraw = ImageDraw.Draw(textimg)
