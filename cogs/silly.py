@@ -52,7 +52,7 @@ class Silly(commands.Cog):
         # Add the name and url to the database
         self.c.execute('INSERT INTO namereply VALUES (?, ?)', (name.lower(), url))
         self.db.commit()
-        await ctx.send('Added name {}'.format(name.lower()))
+        await ctx.send(f'Added name {name.lower()}')
 
     # Admin or bot owner only, not a slash command
     # Remove a name from the namereply dictionary and table
@@ -64,7 +64,7 @@ class Silly(commands.Cog):
         # Remove the name from the database
         self.c.execute('DELETE FROM namereply WHERE user_name = ?', (name.lower(),))
         self.db.commit()
-        await ctx.send('Removed name {}'.format(name.lower()))
+        await ctx.send(f'Removed name {name.lower()}')
 
     # Bot owner only, not a slash command
     # Zalgo text generator

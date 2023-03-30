@@ -61,14 +61,12 @@ class RolePings(commands.Cog):
 
         # If the next ping time is in the future, don't ping the role
         else:
-            await ctx.response.send_message('It\'s not time to chat yet! {} can be pinged again at <t:{}:t>'.format(
-                role.mention, 
-                next_ping_time), ephemeral=True
-                )
+            await ctx.response.send_message(f'It\'s not time to chat yet! {role.mention} can be pinged again at <t:{next_ping_time}:t>', 
+                                            ephemeral=True)
             return
         
         # Finally, ping the role
-        await ctx.response.send_message('Hey {}! {} has decided that it\'s time to chat!'.format(role.mention, ctx.user.mention), allowed_mentions=discord.AllowedMentions(roles=True))
+        await ctx.response.send_message(f'Hey {role.mention}! {ctx.user.mention} has decided that it\'s time to chat!', allowed_mentions=discord.AllowedMentions(roles=True))
 
     @commands.command(name='listroles', description='List all roles and their IDs in the server')
     @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))
@@ -77,7 +75,7 @@ class RolePings(commands.Cog):
         roles = ctx.guild.roles
         role_string = ''
         for role in roles:
-            role_string += '{}: {}\n'.format(role.name, role.id)
+            role_string += f'{role.name}: {role.id}\n'
         # Save the entire role list to a file and send it as a file
         with open('roles.txt', 'w', encoding="utf-8") as f:
             f.write(role_string)

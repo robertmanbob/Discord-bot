@@ -51,15 +51,10 @@ class Admin(commands.Cog):
             $admin vcadmin enable/disable - Enable or disable role pings
             $admin vcadmin setrole <role ID> - Set the role to ping
             $admin vcadmin minrank <rank> - Set the minimum rank to use the /pingvc command""", inline=False)
-            embed.add_field(name='Current Settings:', value="""Time: {} minutes
-            Enabled: {}
-            Role: {} ({})
-            Minimum Level: {}""".format(time, 
-                                        bool(enabled), 
-                                        role, 
-                                        ctx.guild.get_role(role).name if role != 0 else '', 
-                                        'everyone' if min_rank == 0 else get_role_of_rank(ctx.guild, min_rank)), 
-                                        inline=False)
+            embed.add_field(name='Current Settings:', value=f"""Time: {time} minutes
+            Enabled: {bool(enabled)}
+            Role: {role} ({ctx.guild.get_role(role).name if role != 0 else ''})
+            Minimum Level: {'everyone' if min_rank == 0 else get_role_of_rank(ctx.guild, min_rank)}""", inline=False)
             embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
             await ctx.send(embed=embed)
 
@@ -82,7 +77,7 @@ class Admin(commands.Cog):
         self.c.execute('UPDATE roleping SET timer_duration=?, next_roleping=? WHERE server_id=?', (time, next_ping_time, ctx.guild.id))
         self.db.commit()
 
-        await ctx.send('Timer set to {} minutes.'.format(time))
+        await ctx.send(f'Timer set to {time} minutes.')
 
     @vcadmin.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
@@ -111,7 +106,7 @@ class Admin(commands.Cog):
         # Update the role ID in the database
         self.c.execute('UPDATE roleping SET role_id=? WHERE server_id=?', (role, ctx.guild.id))
         self.db.commit()
-        await ctx.send('Role set to {}'.format(roleid.name))
+        await ctx.send(f'Role set to {roleid.name}')
 
     @vcadmin.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
@@ -123,7 +118,7 @@ class Admin(commands.Cog):
         # Update the minimum rank in the database
         self.c.execute('UPDATE roleping SET min_rank=? WHERE server_id=?', (rank, ctx.guild.id))
         self.db.commit()
-        await ctx.send('Minimum rank set to {}'.format(get_role_of_rank(ctx.guild, rank)))
+        await ctx.send(f'Minimum rank set to {get_role_of_rank(ctx.guild, rank)}')
 
     # Suggest admin command sub-group
     @admin.group(name='suggest', description='Suggest admin commands and settings', invoke_without_command=True)
@@ -140,14 +135,16 @@ class Admin(commands.Cog):
         # Get the channel ID and enabled status from the database
         self.c.execute('SELECT enabled, channel_id FROM suggest WHERE server_id=?', (ctx.guild.id,))
         enabled, channel = self.c.fetchone()
+
         # Create an embed to display the current settings
         embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
+
         embed.add_field(name='Subcommands:', value="""$admin suggest enable/disable - Enable or disable suggestions
         $admin suggest setchannel- Set the channel to send suggestions to""", inline=False)
-        embed.add_field(name='Current Settings:', value="""Enabled: {}
-        Channel: {} ({})""".format(bool(enabled),
-                                    channel,
-                                    ctx.guild.get_channel(channel).name if channel != 0 else ''), inline=False)
+
+        embed.add_field(name='Current Settings:', value=f"""Enabled: {bool(enabled)}
+        Channel: {channel} ({ctx.guild.get_channel(channel).name if channel != 0 else ''})""", inline=False)
+
         embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
         await ctx.send(embed=embed)
 
@@ -173,7 +170,7 @@ class Admin(commands.Cog):
         # Update the channel ID in the database to the current channel
         self.c.execute('UPDATE suggest SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
         self.db.commit()
-        await ctx.send('Suggestions channel set to {}'.format(ctx.channel.name))
+        await ctx.send(f'Suggestions channel set to {ctx.channel.name}')
 
     # Group for the welcome message settings
     @admin.group(name='welcome', description='Welcome message settings', invoke_without_command=True)
@@ -194,13 +191,15 @@ class Admin(commands.Cog):
         enabled, channel = self.c.fetchone()
         # Create an embed to display the current settings
         embed = discord.Embed(title='Welcome Admin', description='Usage: $admin welcome <subcommand> <arguments>')
+
         embed.add_field(name='Subcommands:', value="""$admin welcome enable/disable - Enable or disable welcome messages
         $admin welcome setchannel - Set the channel to send welcome messages to""", inline=False)
-        embed.add_field(name='Current Settings:', value="""Enabled: {}
-        Channel: {} ({})""".format(bool(enabled),
-                                    channel,
-                                    ctx.guild.get_channel(channel).name if channel != 0 else ''), inline=False)
+
+        embed.add_field(name='Current Settings:', value=f"""Enabled: {bool(enabled)}
+        Channel: {channel} ({ctx.guild.get_channel(channel).name if channel != 0 else ''})""", inline=False)
+
         embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
+
         await ctx.send(embed=embed)
 
     @welcome.command()
@@ -225,7 +224,7 @@ class Admin(commands.Cog):
         # Update the channel ID in the database to the current channel
         self.c.execute('UPDATE welcome SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
         self.db.commit()
-        await ctx.send('Welcome messages channel set to {}'.format(ctx.channel.name))
+        await ctx.send(f'Welcome messages channel set to {ctx.channel.name}')
         
 
 async def setup(bot: commands.Bot):

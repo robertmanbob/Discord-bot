@@ -30,9 +30,9 @@ class MyBot(commands.Bot):
         for cog in cogs:
             try:
                 await self.load_extension(cog)
-                print('Loaded {}'.format(cog))
+                print(f'Loaded {cog}')
             except Exception as e:
-                print('Failed to load extension {}\n{}: {}'.format(cog, type(e).__name__, e))
+                print(f'Failed to load extension {cog}\n{type(e).__name__}: {e}')
         await bot.tree.sync()
     
     async def on_ready(self):
@@ -46,13 +46,13 @@ class MyBot(commands.Bot):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send('You do not have permission to use this command')
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send('Missing required argument: {}'.format(error.param.name))
+            await ctx.send(f'Missing required argument: {error.param.name}')
         elif isinstance(error, commands.CommandNotFound):
-            print('Command not found: {}'.format(ctx.message.content))
+            print(f'Command not found: {ctx.message.content}')
         elif isinstance(error, commands.CheckFailure):
             await ctx.send('You do not have permission to use this command')
         else:
-            await ctx.send('Error: {}'.format(error))
+            await ctx.send(f'Error: {error}')
 
 
 bot = MyBot()
@@ -89,9 +89,9 @@ async def reload(ctx, cog: str):
     try:
         await bot.unload_extension(cog)
         await bot.load_extension(cog)
-        await ctx.send('Reloaded {}'.format(cog))
+        await ctx.send(f'Reloaded {cog}')
     except Exception as e:
-        await ctx.send('Failed to reload cog: {}'.format(e))
+        await ctx.send(f'Failed to reload cog: {e}')
 
 # Reload all cogs, bot owner only. Not a slash command.
 @bot.command()
@@ -101,9 +101,9 @@ async def reloadall(ctx):
         try:
             await bot.unload_extension(cog)
             await bot.load_extension(cog)
-            await ctx.send('Reloaded {}'.format(cog))
+            await ctx.send(f'Reloaded {cog}')
         except Exception as e:
-            await ctx.send('Failed to reload cog: {}'.format(e))
+            await ctx.send(f'Failed to reload cog: {e}')
 
 # Resync all slash commands, bot owner only. Not a slash command.
 @bot.command()
@@ -124,9 +124,9 @@ async def add(ctx, cog: str):
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
         
-        await ctx.send('Added {}'.format(cog))
+        await ctx.send(f'Added {cog}')
     except Exception as e:
-        await ctx.send('Failed to add cog: {}'.format(e))
+        await ctx.send(f'Failed to add cog: {e}')
 
 # Remove a cog, bot owner only. Not a slash command.
 @bot.command()
@@ -142,9 +142,9 @@ async def remove(ctx, cog: str):
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
         
-        await ctx.send('Removed {}'.format(cog))
+        await ctx.send(f'Removed {cog}')
     except Exception as e:
-        await ctx.send('Failed to remove cog: {}'.format(e))
+        await ctx.send(f'Failed to remove cog: {e}')
 
 # Panic command, bot owner or server admins. Not a slash command.
 # This will log the time, date, and optional message of the panic in a file, and then exit the bot.
@@ -152,7 +152,7 @@ async def remove(ctx, cog: str):
 @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
 async def panic(ctx, *, message: typing.Optional[str] = None):
     with open('panic.txt', 'a') as f:
-        f.write('Panic at {}:\n{}\n'.format(datetime.datetime.now(), message))
+        f.write(f'Panic at {datetime.datetime.now()}:\n{message}\n')
     await ctx.send('Panic logged, exiting')
     await bot.close()
 
@@ -162,9 +162,9 @@ async def panic(ctx, *, message: typing.Optional[str] = None):
 async def update(ctx):
     repo = git.Repo()
     repo.remotes.origin.pull()
-    print('Updated to commit {}'.format(repo.head.object.hexsha))
+    print(f'Updated to commit {repo.head.object.hexsha}')
     # Print that we updated the repo and the current commit
-    await ctx.send('Updated to commit {}'.format(repo.head.object.hexsha))
+    await ctx.send(f'Updated to commit {repo.head.object.hexsha}')
 
 # Connect to the database, run a query, and return the result
 # Owner only, not a slash command
@@ -177,7 +177,7 @@ async def query(ctx: discord.Interaction, *, query: str):
     result = c.fetchall()
     conn.commit()
     conn.close()
-    await ctx.send('Result: {}'.format(result))
+    await ctx.send(f'Result: {result}')
     
 
 bot.run(token)
