@@ -39,8 +39,8 @@ class Welcome(commands.Cog):
                 # Send the welcome card to the designated channel in an embed
                 embed = discord.Embed()
                 embed.set_image(url=f"attachment://{path}")
-                embed.title = f"Welcome to {member.guild.name}, {member.name}#{member.discriminator}!"
-                embed.description = f"Please read the rules, get roles in {member.guild.get_channel(780057871517614091).mention}, and enjoy your stay!"
+                embed.title = f"Everyone be friendly and say hello!"
+                embed.description = f"Welcome to Collusion {member.name}#{member.discriminator}! We hope you never leave the best server ever!"
                 await channel.send(embed=embed, file=discord.File(path))
                 # Delete the welcome card
                 os.remove(path)
