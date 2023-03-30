@@ -1,6 +1,7 @@
 import discord
 import sqlite3
 import os
+import random
 from discord.ext import commands
 from utility import generate_welcome_card
 
@@ -14,6 +15,7 @@ class Welcome(commands.Cog):
         self.db = sqlite3.connect('database.db')
         self.c = self.db.cursor()
 
+    # Join listener
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """When a member joins, generate a welcome card"""
@@ -57,6 +59,40 @@ class Welcome(commands.Cog):
     async def test_welcome(self, ctx: commands.Context):
         """Test the welcome listener"""
         await self.on_member_join(ctx.author)
+
+    # Leave listener
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        """When a member leaves, send a message in the welcome channel"""
+        insults = [", they were a smelly potbellied prick anyway!", 
+                   ". A pox on their house!",
+                   ". I knew something was off about them!",
+                   "! \*spits\*",
+                   ". Oh well. Anyways, "]
+        # Query the database for the enabled status and channel
+        self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (member.guild.id,))
+        result = self.c.fetchone()
+        # If the result is None, return
+        if result is None:
+            return
+        # If the welcome is not enabled, return
+        if not result[0]:
+            return
+        channel = member.guild.get_channel(result[1])
+        # If the channel is None, return
+        if channel is None:
+            return
+        # Send the message in an embed with a random insult
+        embed = discord.Embed(description=f"Looks like {member.name}#{member.discriminator} left" + random.choice(insults))
+        await channel.send(embed=embed)
+
+    # Test leave listener
+    @commands.command()
+    @commands.check_any(commands.is_owner(), commands.has_permissions(manage_guild=True))
+    async def test_leave(self, ctx: commands.Context):
+        """Test the leave listener"""
+        await self.on_member_remove(ctx.author)
+        
 
 async def setup(bot):
     await bot.add_cog(Welcome(bot))
