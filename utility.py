@@ -130,12 +130,15 @@ def generate_welcome_card(avatar_url: str, name: str, gif = 0) -> str:
         gen_welcome.append(cropped_frame)
 
 
+    # Randomly generate an integer to use as a file name
+    random.seed()
+    ran = random.randint(0, 1000000000)
 
     # Save the frames to a new gif
-    gen_welcome[0].save(f"welcome_{name}.gif", save_all=True, append_images=gen_welcome[1:], loop=0, duration=welcome_gif.info['duration'], disposal=1, optimize=True)
+    gen_welcome[0].save(f"welcome_{ran}.gif", save_all=True, append_images=gen_welcome[1:], loop=0, duration=welcome_gif.info['duration'], disposal=1, optimize=True)
 
     # Return the path to the first frame
-    print(f"Welcome card generated for {name}")
-    return f"welcome_{random.randint(0,10000)}.gif"
+    print(f"Welcome card generated for {name} ran {ran}")
+    return f"welcome_{ran}.gif"
 
     
