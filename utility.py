@@ -136,6 +136,6 @@ def generate_welcome_card(avatar_url: str, name: str, gif = 0) -> str:
 
     # Return the path to the first frame
     print(f"Welcome card generated for {name}")
-    return f"welcome_{name}.gif"
+    return f"welcome_{random.randint(0,10000)}.gif"
 
     
