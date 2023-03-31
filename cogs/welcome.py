@@ -32,6 +32,9 @@ class Welcome(commands.Cog):
         # If the channel is None, return
         if channel is None:
             return
+        # If the user is a bot, return
+        if member.bot:
+            return
         # Set the bot to typing in the channel
         async with channel.typing():
             # Attempt to make and send the welcome card, deleting it if we catch an error
