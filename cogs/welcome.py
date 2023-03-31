@@ -42,7 +42,7 @@ class Welcome(commands.Cog):
                 embed = discord.Embed()
                 embed.set_image(url=f"attachment://{path}")
                 embed.title = f"Everyone be friendly and say hello!"
-                embed.description = f"Welcome to Collusion {member.name}#{member.discriminator}! We hope you never leave the best server ever!"
+                embed.description = f"Welcome to Collusion, {member.name}#{member.discriminator}! We hope you never leave the best server ever!"
                 await channel.send(embed=embed, file=discord.File(path))
                 # Delete the welcome card
                 os.remove(path)
