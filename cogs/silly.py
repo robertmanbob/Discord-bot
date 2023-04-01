@@ -20,15 +20,15 @@ class Silly(commands.Cog):
             self.namereply[row[0]] = row[1]
 
 
-    # # Owner only, not a slash command
-    # @commands.command()
-    # async def chance(self, ctx: commands.Context):
-    #     """Reveals the true form of Chance"""
-    #     # Send a specific image via an embed
-    #     # This is a joke command, so it's not very useful
-    #     # Check if the sender is the owner of the bot or the person with this ID 363872734532468754
-    #     if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
-    #         await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
+    # Owner only, not a slash command
+    @commands.command()
+    async def chance(self, ctx: commands.Context):
+        """Reveals the true form of Chance"""
+        # Send a specific image via an embed
+        # This is a joke command, so it's not very useful
+        # Check if the sender is the owner of the bot or the person with this ID 363872734532468754
+        if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
+            await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
 
     # Listener for on_message, handling name invoking
     @commands.Cog.listener()
@@ -152,17 +152,17 @@ class Silly(commands.Cog):
 
     # Bot owner or specified person, not a slash command
     # Sends a lemon man image
-    # @commands.command()
-    # async def nona(self, ctx: commands.Context):
-    #     if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
-    #         await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
-
-    # April fools command, not a slash command
-    # Sends a fake leave message to the designated channel ID
     @commands.command()
-    async def bamboozle(self, ctx: commands.Context, channel_id: int, *, reason: str = ''):
-        embed = discord.Embed(description=f'Looks like {ctx.author.name}#{ctx.author.discriminator} left, they were a smelly potbellied prick anyway!')
-        await ctx.bot.get_channel(channel_id).send(embed=embed)
+    async def nona(self, ctx: commands.Context):
+        if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
+            await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
+
+    # # April fools command, not a slash command
+    # # Sends a fake leave message to the designated channel ID
+    # @commands.command()
+    # async def bamboozle(self, ctx: commands.Context, channel_id: int, *, reason: str = ''):
+    #     embed = discord.Embed(description=f'Looks like {ctx.author.name}#{ctx.author.discriminator} left, they were a smelly potbellied prick anyway!')
+    #     await ctx.bot.get_channel(channel_id).send(embed=embed)
 
 
         
