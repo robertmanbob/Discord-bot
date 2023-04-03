@@ -48,7 +48,7 @@ class Admin(commands.Cog):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title='Role Admin', description='Usage: $admin vcadmin <subcommand> <arguments>')
             embed.add_field(name='Subcommands:', value="""$admin vcadmin timer <time> - Set the time between role pings in minutes
-            $admin vcadmin enable/disable - Enable or disable role pings
+            $admin vcadmin vc_enable/vc_disable - Enable or disable role pings
             $admin vcadmin setrole <role ID> - Set the role to ping
             $admin vcadmin minrank <rank> - Set the minimum rank to use the /pingvc command""", inline=False)
             embed.add_field(name='Current Settings:', value=f"""Time: {time} minutes
@@ -81,7 +81,7 @@ class Admin(commands.Cog):
 
     @vcadmin.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def enable(self, ctx: commands.Context):
+    async def vc_enable(self, ctx: commands.Context):
         # Update the enabled status in the database
         self.c.execute('UPDATE roleping SET rpenabled=1 WHERE server_id=?', (ctx.guild.id,))
         self.db.commit()
@@ -89,7 +89,7 @@ class Admin(commands.Cog):
 
     @vcadmin.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def disable(self, ctx: commands.Context):
+    async def vc_disable(self, ctx: commands.Context):
         # Update the enabled status in the database
         self.c.execute('UPDATE roleping SET rpenabled=0 WHERE server_id=?', (ctx.guild.id,))
         self.db.commit()
@@ -139,7 +139,7 @@ class Admin(commands.Cog):
         # Create an embed to display the current settings
         embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
 
-        embed.add_field(name='Subcommands:', value="""$admin suggest enable/disable - Enable or disable suggestions
+        embed.add_field(name='Subcommands:', value="""$admin suggest suggest_enable/suggest_disable - Enable or disable suggestions
         $admin suggest setchannel- Set the channel to send suggestions to""", inline=False)
 
         embed.add_field(name='Current Settings:', value=f"""Enabled: {bool(enabled)}
@@ -150,7 +150,7 @@ class Admin(commands.Cog):
 
     @suggest.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def enable(self, ctx: commands.Context):
+    async def suggest_enable(self, ctx: commands.Context):
         # Update the enabled status in the database
         self.c.execute('UPDATE suggest SET enabled=1 WHERE server_id=?', (ctx.guild.id,))
         self.db.commit()
@@ -158,7 +158,7 @@ class Admin(commands.Cog):
 
     @suggest.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def disable(self, ctx: commands.Context):
+    async def suggest_disable(self, ctx: commands.Context):
         # Update the enabled status in the database
         self.c.execute('UPDATE suggest SET enabled=0 WHERE server_id=?', (ctx.guild.id,))
         self.db.commit()
