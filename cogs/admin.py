@@ -48,7 +48,7 @@ class Admin(commands.Cog):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title='Role Admin', description='Usage: $admin vcadmin <subcommand> <arguments>')
             embed.add_field(name='Subcommands:', value="""$admin vcadmin timer <time> - Set the time between role pings in minutes
-            $admin vcadmin vc_enable/vc_disable - Enable or disable role pings
+            $admin vcadmin enable/disable - Enable or disable role pings
             $admin vcadmin setrole <role ID> - Set the role to ping
             $admin vcadmin minrank <rank> - Set the minimum rank to use the /pingvc command""", inline=False)
             embed.add_field(name='Current Settings:', value=f"""Time: {time} minutes
@@ -79,7 +79,7 @@ class Admin(commands.Cog):
 
         await ctx.send(f'Timer set to {time} minutes.')
 
-    @vcadmin.command()
+    @vcadmin.command(name='enable', aliases=['vc_enable'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def vc_enable(self, ctx: commands.Context):
         # Update the enabled status in the database
@@ -87,7 +87,7 @@ class Admin(commands.Cog):
         self.db.commit()
         await ctx.send('Role pings enabled')
 
-    @vcadmin.command()
+    @vcadmin.command(name='disable', aliases=['vc_disable'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def vc_disable(self, ctx: commands.Context):
         # Update the enabled status in the database
@@ -139,7 +139,7 @@ class Admin(commands.Cog):
         # Create an embed to display the current settings
         embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
 
-        embed.add_field(name='Subcommands:', value="""$admin suggest suggest_enable/suggest_disable - Enable or disable suggestions
+        embed.add_field(name='Subcommands:', value="""$admin suggest enable/disable - Enable or disable suggestions
         $admin suggest setchannel- Set the channel to send suggestions to""", inline=False)
 
         embed.add_field(name='Current Settings:', value=f"""Enabled: {bool(enabled)}
@@ -148,7 +148,7 @@ class Admin(commands.Cog):
         embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
         await ctx.send(embed=embed)
 
-    @suggest.command()
+    @suggest.command(name='enable', aliases=['suggest_enable'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def suggest_enable(self, ctx: commands.Context):
         # Update the enabled status in the database
@@ -156,7 +156,7 @@ class Admin(commands.Cog):
         self.db.commit()
         await ctx.send('Suggestions enabled')
 
-    @suggest.command()
+    @suggest.command(name='disable', aliases=['suggest_disable'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def suggest_disable(self, ctx: commands.Context):
         # Update the enabled status in the database
