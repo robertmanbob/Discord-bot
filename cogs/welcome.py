@@ -71,7 +71,8 @@ class Welcome(commands.Cog):
                    ". A pox on their house!",
                    ". I knew something was off about them!",
                    "! \*spits\*",
-                   ". Oh well. Anyways, "]
+                   ". Oh well. Anyways, ",
+                   ". I don't know them, but fuck em'"]
         # Query the database for the enabled status and channel
         self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (member.guild.id,))
         result = self.c.fetchone()
