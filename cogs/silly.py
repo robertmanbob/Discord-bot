@@ -157,12 +157,16 @@ class Silly(commands.Cog):
         if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
             await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
 
-    # # April fools command, not a slash command
-    # # Sends a fake leave message to the designated channel ID
-    # @commands.command()
-    # async def bamboozle(self, ctx: commands.Context, channel_id: int, *, reason: str = ''):
-    #     embed = discord.Embed(description=f'Looks like {ctx.author.name}#{ctx.author.discriminator} left, they were a smelly potbellied prick anyway!')
-    #     await ctx.bot.get_channel(channel_id).send(embed=embed)
+    # Bot owner, slash command
+    @app_commands.command(name='asay', description='Make the bot say something. Requires perms.')
+    async def asay(self, ctx: discord.Interaction, *, text: str):
+        # Check if the user is the bot owner
+        if ctx.user.id == self.bot.owner_id:
+            await ctx.response.send_message('Sending...', ephemeral=True)
+            await ctx.channel.send(text)
+        # If not, let them know
+        else:
+            await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
 
 
         
