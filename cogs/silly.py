@@ -28,7 +28,8 @@ class Silly(commands.Cog):
         # This is a joke command, so it's not very useful
         # Check if the sender is the owner of the bot or the person with this ID 363872734532468754
         if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
-            await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
+            # await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
+            await ctx.send(embed=discord.Embed().set_image(url='https://static.wikia.nocookie.net/howtotrainyourdragon/images/7/78/Character_Hiccup_02.png/revision/latest?cb=20180702130930'))
 
     # Listener for on_message, handling name invoking
     @commands.Cog.listener()
