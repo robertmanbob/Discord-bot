@@ -2,6 +2,7 @@ import discord
 import sqlite3
 import random
 import asyncio
+import codecs
 from discord.ext import commands
 from discord import app_commands
 from utility import YesNoView
@@ -169,11 +170,49 @@ class Silly(commands.Cog):
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
 
+    # Secret command. Guess the cryptology with your own input, win a prize
+    @commands.command()
+    async def secret(self, ctx: commands.Context, *, text: str = None):
+        # If you're from the server and you're reading this, don't cheat :(
 
+        def rot_alpha(n):
+            from string import ascii_lowercase as lc, ascii_uppercase as uc
+            lookup = str.maketrans(lc + uc, lc[n:] + lc[:n] + uc[n:] + uc[:n])
+            return lambda s: s.translate(lookup)
+
+        # Display an instruction message
+        if not text:
+            await ctx.send("You've found a secret!" +
+                           " Input some text and try to figure out what it's doing!" +
+                           "\nIf you get it right, you'll get a prize by DMing Robbit the answer!")
+            return
         
-        
-    
-        
+        # If the input is "hint", give a hint
+        if text == 'hint':
+            await ctx.send('The input is being partially reversed,' +
+                            'and then encoded with random variation of a common cipher.')
+            return
+
+        # Strip all non-alphabetical characters from the input
+        text = ''.join([char for char in text if char.isalpha() or char == ' '])
+
+        # Split the input into a list of words
+        text = text.split()   
+
+        # reverse every other word in the input
+        for i in range(len(text)):
+            if i % 2 == 0:
+                text[i] = text[i][::-1]
+
+        # Join the input back into a string
+        text = ' '.join(text)
+
+        # Choose a random rot cipher from 2 to 13, encode the input with it
+        rot = random.randint(2, 13)
+        text = rot_alpha(rot)(text)
+
+        # Return the result
+        await ctx.send(text)
 
 async def setup(bot):
     await bot.add_cog(Silly(bot))
