@@ -196,6 +196,9 @@ class Silly(commands.Cog):
         # Strip all non-alphabetical characters from the input
         text = ''.join([char for char in text if char.isalpha() or char == ' '])
 
+        # Make it all lowercase
+        text = text.lower()
+
         # Split the input into a list of words
         text = text.split()   
 
