@@ -150,7 +150,7 @@ class Silly(commands.Cog):
             await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been set to {reply.content}!')
         except discord.Forbidden:
             # If the bot doesn't have permission to change the nickname, let them know
-            await ctx.channel.send(f'I don\'t have permission to change your nickname, but it would have been {reply.content}.')
+            await ctx.channel.send(f'I don\'t have permission to change your nickname, so we\'re going to get with the honor system and pretend I did. Your nickname is now {reply.content}!')
 
     # Bot owner or specified person, not a slash command
     # Sends a lemon man image
