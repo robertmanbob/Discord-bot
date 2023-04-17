@@ -119,38 +119,38 @@ class Silly(commands.Cog):
     # # Nickname game. First reply to the message wins and sets the nickname of the author
     # # to the content of the message
     # # Slash command
-    # @app_commands.command(name='nickgame', description='Start a nickname game, the first person to reply gets to set YOUR nickname!')
-    # async def nickgame(self, ctx: discord.Interaction):
-    #     # Ask if the user is sure they want to start a nickname game. Yes or no buttons
-    #     view = YesNoView(ctx)
-    #     await ctx.response.send_message('Are you sure you want to start a nickname game? This will send a message that allows the first person to respond to set YOUR nickname!', view=view, ephemeral=True)
+    @app_commands.command(name='nickgame', description='Start a nickname game, the first person to reply gets to set YOUR nickname!')
+    async def nickgame(self, ctx: discord.Interaction):
+        # Ask if the user is sure they want to start a nickname game. Yes or no buttons
+        view = YesNoView(ctx)
+        await ctx.response.send_message('Are you sure you want to start a nickname game? This will send a message that allows the first person to respond to set YOUR nickname!', view=view, ephemeral=True)
         
-    #     # Wait for a response
-    #     no_response = await view.wait()
+        # Wait for a response
+        no_response = await view.wait()
         
-    #     # If the user said no or has not responded, return
-    #     if no_response or not view.value:
-    #         return
+        # If the user said no or has not responded, return
+        if no_response or not view.value:
+            return
         
-    #     # If the user said yes, let them know and start the game
-    #     game = await ctx.channel.send(f'{ctx.user.mention} has started a nickname game! The first person to reply to this message gets to set their nickname!')
+        # If the user said yes, let them know and start the game
+        game = await ctx.channel.send(f'{ctx.user.mention} has started a nickname game! The first person to reply to this message gets to set their nickname!')
         
-    #     # Wait for a reply
-    #     try:
-    #         # Message must be in the same channel, not from the game target, and must be a reply to the game message
-    #         reply = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.reference.message_id == game.id, timeout=15)
-    #     except asyncio.TimeoutError:
-    #         # If a user didn't reply in time, let them know
-    #         await ctx.channel.send('No one replied in time, so I\'m not going to set your nickname.')
-    #         return
+        # Wait for a reply
+        try:
+            # Message must be in the same channel, not from the game target, and must be a reply to the game message
+            reply = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.reference.message_id == game.id, timeout=15)
+        except asyncio.TimeoutError:
+            # If a user didn't reply in time, let them know
+            await ctx.channel.send('No one replied in time, so I\'m not going to set your nickname.')
+            return
         
-    #     # If the user replied, try to set their nickname to the content of the message
-    #     try:
-    #         await ctx.user.edit(nick=reply.content)
-    #         await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been set to {reply.content}!')
-    #     except discord.Forbidden:
-    #         # If the bot doesn't have permission to change the nickname, let them know
-    #         await ctx.channel.send(f'I don\'t have permission to change your nickname, but it would have been {reply.content}.')
+        # If the user replied, try to set their nickname to the content of the message
+        try:
+            await ctx.user.edit(nick=reply.content)
+            await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been set to {reply.content}!')
+        except discord.Forbidden:
+            # If the bot doesn't have permission to change the nickname, let them know
+            await ctx.channel.send(f'I don\'t have permission to change your nickname, but it would have been {reply.content}.')
 
     # Bot owner or specified person, not a slash command
     # Sends a lemon man image
