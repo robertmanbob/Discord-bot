@@ -178,6 +178,20 @@ async def query(ctx: discord.Interaction, *, query: str):
     conn.commit()
     conn.close()
     await ctx.send(f'Result: {result}')
+
+# Disable a command, bot owner only. Not a slash command.
+@bot.command()
+@commands.is_owner()
+async def disable(ctx, command: str):
+    # You can't disable the disable command
+    if command == 'disable':
+        await ctx.send('You can\'t disable the disable command')
+        return
+    # Remove_command returns None if the command doesn't exist
+    if bot.remove_command(command) is None:
+        await ctx.send(f'Command {command} not found')
+    else:
+        await ctx.send(f'Disabled {command}')
     
 
 bot.run(token)
