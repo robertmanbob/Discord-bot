@@ -217,6 +217,25 @@ class Silly(commands.Cog):
         # Return the result
         await ctx.send(text)
 
+    # Reply with bot permissions, owner only
+    # Slash command
+    @app_commands.command(name='perms', description='Get the bot\'s permissions in this channel.')
+    async def perms(self, ctx: discord.Interaction):
+        # Check if the user is the bot owner
+        if ctx.user.id == self.bot.owner_id:
+            # Get the bot's permissions in the channel
+            perms = ctx.channel.permissions_for(ctx.guild.me)
+            # For each permission, if it's True, add it to the output
+            output = ''
+            for perm in perms:
+                if perm[1]:
+                    output += f'{perm[0]}\n'
+            # Send a message with the permissions
+            await ctx.response.send_message(f'```{output}```', ephemeral=True)
+        # If not, let them know
+        else:
+            await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
+
 async def setup(bot):
     await bot.add_cog(Silly(bot))
 
