@@ -138,7 +138,7 @@ class Silly(commands.Cog):
         # Wait for a reply
         try:
             # Message must be in the same channel, not from the game target, and must be a reply to the game message
-            reply = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.reference.message_id == game.id, timeout=15)
+            reply = await self.bot.wait_for('message', check=lambda m: m.channel == ctx.channel and m.reference.message_id == game.id and m.author.id != ctx.user.id, timeout=15)
         except asyncio.TimeoutError:
             # If a user didn't reply in time, let them know
             await ctx.channel.send('No one replied in time, so I\'m not going to set your nickname.')
@@ -150,7 +150,7 @@ class Silly(commands.Cog):
             await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been set to {reply.content}!')
         except discord.Forbidden:
             # If the bot doesn't have permission to change the nickname, let them know
-            await ctx.channel.send(f'I don\'t have permission to change your nickname, so we\'re going to get with the honor system and pretend I did. Your nickname is now {reply.content}!')
+            await ctx.channel.send(f'I don\'t have permission to change {ctx.user.mention}\'s nickname, so we\'re going to get with the honor system and pretend I did. Their nickname is now {reply.content}!')
 
     # Bot owner or specified person, not a slash command
     # Sends a lemon man image
