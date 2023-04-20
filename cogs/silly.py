@@ -285,8 +285,12 @@ class Silly(commands.Cog):
 
             # Send a message saying that the curse has been lifted
             await ctx.channel.send(f'{user.mention}\'s curse has been lifted!')
-            # Remove the curse from the set of curses
-            self.curses.remove(user.id)
+            # (Try) to remove the curse from the set of curses
+            try:
+                self.curses.remove(user.id)
+            except KeyError:
+                # If the curse was already removed
+                pass
 
         # If not, let them know
         else:
