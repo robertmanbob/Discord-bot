@@ -240,8 +240,8 @@ class Silly(commands.Cog):
     # Slash command, owner only
     @app_commands.command(name='curse', description='Curse a user.')
     async def curse(self, ctx: discord.Interaction, user: discord.User, emoji: str, time: int):
-        # Check if the user is the bot owner or has manage channels permission
-        if ctx.user.id == self.bot.owner_id or ctx.channel.permissions_for(ctx.user).manage_channels:
+        # Check if the user is the bot owner or has manage messages permission
+        if ctx.user.id == self.bot.owner_id or ctx.channel.permissions_for(ctx.user).manage_messages:
             # Send a message saying that the user has been cursed
             await ctx.response.send_message(f'{user.mention} has been cursed for {time} seconds!')
             
