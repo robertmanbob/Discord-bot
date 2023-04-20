@@ -242,8 +242,8 @@ class Silly(commands.Cog):
     async def curse(self, ctx: discord.Interaction, user: discord.User, emoji: str, time: int):
         # Check if the user is the bot owner or has manage messages permission
         if ctx.user.id == self.bot.owner_id or ctx.channel.permissions_for(ctx.user).manage_messages:
-            # 1 in 10 curses will curse the caller instead
-            if random.randint(1, 10) == 1:
+            # 1 in 5 curses will curse the caller instead
+            if random.randint(1, 5) == 1:
                 user = ctx.user
 
             # If the time is greater than 600, set it to 600
