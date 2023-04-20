@@ -20,6 +20,9 @@ class Silly(commands.Cog):
         for row in self.c.execute('SELECT * FROM namereply'):
             self.namereply[row[0]] = row[1]
 
+        # List of ongoing curses
+        self.curses = set()
+
 
     # Owner only, not a slash command
     @commands.command()
@@ -237,11 +240,16 @@ class Silly(commands.Cog):
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
 
     # Curse the designated user, reacting to their messages with a specific emoji for a designated amount of time
-    # Slash command, owner only
+    # Slash command, moderator or owner only
     @app_commands.command(name='curse', description='Curse a user.')
     async def curse(self, ctx: discord.Interaction, user: discord.User, emoji: str, time: int):
         # Check if the user is the bot owner or has manage messages permission
         if ctx.user.id == self.bot.owner_id or ctx.channel.permissions_for(ctx.user).manage_messages:
+            # If the target is already cursed, let them know
+            if user.id in self.curses:
+                await ctx.response.send_message(f'{user.mention} is already cursed!', ephemeral=True)
+                return
+
             # 1 in 5 curses will curse the caller instead
             if random.randint(1, 5) == 1:
                 user = ctx.user
@@ -250,11 +258,21 @@ class Silly(commands.Cog):
             if time > 600:
                 time = 600
 
-            # Send a message saying that the user has been cursed
-            await ctx.response.send_message(f'{user.mention} has been cursed for {time} seconds!')
+            # If the curse is backfired, double the time
+            if user.id == ctx.user.id:
+                time *= 2
+
+            # Send a message saying that the user has been cursed, adding a snippet if the curse backfired
+            await ctx.response.send_message(f'{user.mention} has been cursed for {time} seconds!' + (' The gods are angry at their demands!' if user.id == ctx.user.id else ''))
+
+            # Add the curse to the set of curses
+            self.curses.add(user.id)
             
             # While the time is greater than 0, listen for messages from the user and react to them
             while time > 0:
+                # If the curse is removed from the set, stop the loop
+                if user.id not in self.curses:
+                    break
                 try:
                     # Wait for a message from the user
                     message = await self.bot.wait_for('message', check=lambda m: m.author.id == user.id, timeout=1)
@@ -267,6 +285,30 @@ class Silly(commands.Cog):
 
             # Send a message saying that the curse has been lifted
             await ctx.channel.send(f'{user.mention}\'s curse has been lifted!')
+            # Remove the curse from the set of curses
+            self.curses.remove(user.id)
+
+        # If not, let them know
+        else:
+            await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
+
+    # Remove a curse from a user
+    # Slash command, moderator or owner only
+    @app_commands.command(name='uncurse', description='Remove a curse from a user early.')
+    async def uncurse(self, ctx: discord.Interaction, user: discord.User):
+        # If the target is the person invoking the command, reject it
+        if user.id == ctx.user.id and ctx.user.id != self.bot.owner_id:
+            await ctx.response.send_message('You are *far* too weak to uncurse yourself!', ephemeral=True)
+            return
+        # Check if the user is the bot owner or has manage messages permission
+        if ctx.user.id == self.bot.owner_id or ctx.channel.permissions_for(ctx.user).manage_messages:
+            # If the user is cursed, remove them from the set of curses. This will stop the curse loop.
+            if user.id in self.curses:
+                self.curses.remove(user.id)
+                await ctx.response.send_message(f'{user.mention}\'s curse has been removed!', ephemeral=True)
+            # If not, let them know
+            else:
+                await ctx.response.send_message(f'{user.mention} isn\'t cursed!', ephemeral=True)
         # If not, let them know
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
