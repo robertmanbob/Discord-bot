@@ -236,6 +236,34 @@ class Silly(commands.Cog):
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
 
+    # Curse the designated user, reacting to their messages with a specific emoji for a designated amount of time
+    # Slash command, owner only
+    @app_commands.command(name='curse', description='Curse a user.')
+    async def curse(self, ctx: discord.Interaction, user: discord.User, emoji: str, time: int):
+        # Check if the user is the bot owner
+        if ctx.user.id == self.bot.owner_id:
+            # Send a message saying that the user has been cursed
+            await ctx.response.send_message(f'{user.mention} has been cursed for {time} seconds!')
+            
+            # While the time is greater than 0, listen for messages from the user and react to them
+            while time > 0:
+                try:
+                    # Wait for a message from the user
+                    message = await self.bot.wait_for('message', check=lambda m: m.author.id == user.id, timeout=1)
+                except asyncio.TimeoutError:
+                    # If the user didn't send a message in time, subtract 1 from the time
+                    time -= 1
+                else:
+                    # If the user did send a message, react to it
+                    await message.add_reaction(emoji)
+
+            # Send a message saying that the curse has been lifted
+            await ctx.channel.send(f'{user.mention}\'s curse has been lifted!')
+        # If not, let them know
+        else:
+            await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
+    
+
 async def setup(bot):
     await bot.add_cog(Silly(bot))
 
