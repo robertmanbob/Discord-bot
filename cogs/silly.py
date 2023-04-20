@@ -242,6 +242,10 @@ class Silly(commands.Cog):
     async def curse(self, ctx: discord.Interaction, user: discord.User, emoji: str, time: int):
         # Check if the user is the bot owner or has manage messages permission
         if ctx.user.id == self.bot.owner_id or ctx.channel.permissions_for(ctx.user).manage_messages:
+            # If the time is greater than 600, set it to 600
+            if time > 600:
+                time = 600
+
             # Send a message saying that the user has been cursed
             await ctx.response.send_message(f'{user.mention} has been cursed for {time} seconds!')
             
