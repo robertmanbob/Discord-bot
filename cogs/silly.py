@@ -24,16 +24,16 @@ class Silly(commands.Cog):
         self.curses = set()
 
 
-    # Owner only, not a slash command
-    @commands.command()
-    async def chance(self, ctx: commands.Context):
-        """Reveals the true form of Chance"""
-        # Send a specific image via an embed
-        # This is a joke command, so it's not very useful
-        # Check if the sender is the owner of the bot or the person with this ID 363872734532468754
-        if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
-            # await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
-            await ctx.send(embed=discord.Embed().set_image(url='https://static.wikia.nocookie.net/howtotrainyourdragon/images/7/78/Character_Hiccup_02.png/revision/latest?cb=20180702130930'))
+    # # Owner only, not a slash command
+    # @commands.command()
+    # async def chance(self, ctx: commands.Context):
+    #     """Reveals the true form of Chance"""
+    #     # Send a specific image via an embed
+    #     # This is a joke command, so it's not very useful
+    #     # Check if the sender is the owner of the bot or the person with this ID 363872734532468754
+    #     if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
+    #         # await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
+    #         await ctx.send(embed=discord.Embed().set_image(url='https://static.wikia.nocookie.net/howtotrainyourdragon/images/7/78/Character_Hiccup_02.png/revision/latest?cb=20180702130930'))
 
     # Listener for on_message, handling name invoking
     @commands.Cog.listener()
@@ -155,12 +155,12 @@ class Silly(commands.Cog):
             # If the bot doesn't have permission to change the nickname, let them know
             await ctx.channel.send(f'I don\'t have permission to change {ctx.user.mention}\'s nickname, so we\'re going to get with the honor system and pretend I did. Their nickname is now {reply.content}!')
 
-    # Bot owner or specified person, not a slash command
-    # Sends a lemon man image
-    @commands.command()
-    async def nona(self, ctx: commands.Context):
-        if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
-            await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
+    # # Bot owner or specified person, not a slash command
+    # # Sends a lemon man image
+    # @commands.command()
+    # async def nona(self, ctx: commands.Context):
+    #     if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
+    #         await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
 
     # Bot owner, slash command
     @app_commands.command(name='asay', description='Make the bot say something. Requires perms.')
@@ -172,53 +172,6 @@ class Silly(commands.Cog):
         # If not, let them know
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
-
-    # Secret command. Guess the cryptology with your own input, win a prize
-    @commands.command()
-    async def secret(self, ctx: commands.Context, *, text: str = None):
-        # If you're from the server and you're reading this, don't cheat :(
-
-        def rot_alpha(n):
-            from string import ascii_lowercase as lc, ascii_uppercase as uc
-            lookup = str.maketrans(lc + uc, lc[n:] + lc[:n] + uc[n:] + uc[:n])
-            return lambda s: s.translate(lookup)
-
-        # Display an instruction message
-        if not text:
-            await ctx.send("You've found a secret!" +
-                           " Input some text and try to figure out what it's doing!" +
-                           "\nIf you get it right, you'll get a prize by DMing Robbit the answer!")
-            return
-        
-        # If the input is "hint", give a hint
-        if text == 'hint':
-            await ctx.send('The input is being partially reversed,' +
-                            'and then encoded with random variation of a common cipher.')
-            return
-
-        # Strip all non-alphabetical characters from the input
-        text = ''.join([char for char in text if char.isalpha() or char == ' '])
-
-        # Make it all lowercase
-        text = text.lower()
-
-        # Split the input into a list of words
-        text = text.split()   
-
-        # reverse every other word in the input
-        for i in range(len(text)):
-            if i % 2 == 0:
-                text[i] = text[i][::-1]
-
-        # Join the input back into a string
-        text = ' '.join(text)
-
-        # Choose a random rot cipher from 2 to 13, encode the input with it
-        rot = random.randint(2, 13)
-        text = rot_alpha(rot)(text)
-
-        # Return the result
-        await ctx.send(text)
 
     # Reply with bot permissions, owner only
     # Slash command
