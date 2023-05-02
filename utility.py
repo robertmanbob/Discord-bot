@@ -30,11 +30,12 @@ class YesNoView(discord.ui.View):
 
 # Yes or No button with specified user
 class YesNoUserView(discord.ui.View):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx, user, timeout=30):
         super().__init__()
         self.ctx = ctx
         self.user = user
         self.value = None
+        self.timeout = timeout
 
     @discord.ui.button(label='Yes', style=discord.ButtonStyle.green)
     async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
