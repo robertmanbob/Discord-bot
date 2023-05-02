@@ -316,9 +316,16 @@ class Silly(commands.Cog):
                 # Edit the message to say that the target didn't respond
                 await message.edit(content=f'{user.mention} didn\'t respond in time!')
             else:
-                # If the target responds, change the challenger's nickname
-                await ctx.user.edit(nick=message.content)
-                await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been changed!')
+                # If the target responds, try to change the challenger's nickname
+                try:
+                    await ctx.user.edit(nick=message.content)
+                except discord.Forbidden:
+                    # If the bot doesn't have permission, let the players know
+                    await ctx.channel.send(f'I don\'t have permission to change {ctx.user.mention}\'s nickname! Hopefully they\'ll change it themselves...')
+                else:
+                    # If the bot does have permission, let the players know
+                    await ctx.channel.send(f'{user.mention}\'s nickname has been changed!')
+                    
         else:
             await ctx.channel.send(f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!')
             # Wait for the challenger to respond
