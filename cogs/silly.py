@@ -349,7 +349,13 @@ class Silly(commands.Cog):
         self.challenges.remove(user.id)
         self.challenges.remove(ctx.user.id)
 
-    # Coin flip player reset
+    # Coin flip player reset debug
+    # Not a slash command
+    @commands.command(name='challengereset', description='Reset the coinflip challenge system.')
+    @commands.is_owner()
+    async def challengereset(self, ctx: commands.Context):
+        self.challenges = set()
+        await ctx.send('Challenges reset!')
 
 
 
