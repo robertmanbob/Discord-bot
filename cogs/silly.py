@@ -324,7 +324,7 @@ class Silly(commands.Cog):
                     await ctx.channel.send(f'I don\'t have permission to change {ctx.user.mention}\'s nickname! Hopefully they\'ll change it themselves...')
                 else:
                     # If the bot does have permission, let the players know
-                    await ctx.channel.send(f'{user.mention}\'s nickname has been changed!')
+                    await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been changed!')
                     
         else:
             await ctx.channel.send(f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!')
@@ -348,6 +348,8 @@ class Silly(commands.Cog):
         # Remove the players from the set of challenges
         self.challenges.remove(user.id)
         self.challenges.remove(ctx.user.id)
+
+    # Coin flip player reset
 
 
 
