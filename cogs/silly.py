@@ -5,7 +5,7 @@ import asyncio
 import codecs
 from discord.ext import commands
 from discord import app_commands
-from utility import YesNoView
+from utility import YesNoView, YesNoUserView
 
 class Silly(commands.Cog):
     """Silly commands"""
@@ -23,17 +23,9 @@ class Silly(commands.Cog):
         # List of ongoing curses
         self.curses = set()
 
+        # List of ongoing challenges
+        self.challenges = set()
 
-    # # Owner only, not a slash command
-    # @commands.command()
-    # async def chance(self, ctx: commands.Context):
-    #     """Reveals the true form of Chance"""
-    #     # Send a specific image via an embed
-    #     # This is a joke command, so it's not very useful
-    #     # Check if the sender is the owner of the bot or the person with this ID 363872734532468754
-    #     if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 363872734532468754:
-    #         # await ctx.send(embed=discord.Embed().set_image(url='https://static.miraheze.org/greatcharacterswiki/thumb/0/08/1481909501350.png/290px-1481909501350.png'))
-    #         await ctx.send(embed=discord.Embed().set_image(url='https://static.wikia.nocookie.net/howtotrainyourdragon/images/7/78/Character_Hiccup_02.png/revision/latest?cb=20180702130930'))
 
     # Listener for on_message, handling name invoking
     @commands.Cog.listener()
@@ -269,7 +261,90 @@ class Silly(commands.Cog):
         # If not, let them know
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
-    
+
+    # Coin flip nickname challenge
+    # Slash command
+    @app_commands.command(name='coinflip', description='Challenge someone to a coinflip with a nickname change on the line.')
+    async def coinflip(self, ctx: discord.Interaction, user: discord.User):
+        # If the target is the person invoking the command, reject it
+        if user.id == ctx.user.id:
+            await ctx.response.send_message('You can\'t challenge yourself!', ephemeral=True)
+            return
+        # If the target is a bot, reject it
+        if user.bot:
+            await ctx.response.send_message('You can\'t challenge a bot!', ephemeral=True)
+            return
+        # If the target or challenger is already in a challenge, reject it
+        if user.id in self.challenges or ctx.user.id in self.challenges:
+            await ctx.response.send_message('One of the participants is already in a challenge!', ephemeral=True)
+            return
+        
+        # Add the challenger and target to the set of challenges
+        self.challenges.add(user.id)
+        self.challenges.add(ctx.user.id)
+
+        # Send a message saying that the challenge has been sent
+        await ctx.response.send_message(f'Challenge sent to {user.mention}!', ephemeral=True)
+
+        # Open a YesNoUserView with the target as the target
+        view = YesNoUserView(ctx, user)
+
+        # Send a message to the target asking if they accept the challenge
+        message = await ctx.channel.send(f'{user.mention}, {ctx.user.mention} has challenged you to a coinflip with your nickname on the line! Do you accept?', view=view)
+
+        # Wait for the target to respond
+        no_response = await view.wait()
+
+        # If the target doesn't respond or says no, let the challenger know
+        if no_response or not view.value:
+            await message.edit(content=f'{user.mention} has declined the challenge!')
+            self.challenges.remove(user.id)
+            self.challenges.remove(ctx.user.id)
+            return
+        
+        # Let the players know that a coin will be flipped, and flip it
+        await message.edit(content=f'{user.mention} has accepted the challenge! Flipping a coin...')
+        coin = random.randint(0, 1)
+
+        # Depending on the result, let the players know who won
+        if coin == 0:
+            await ctx.channel.send(f'It\'s heads! {user.mention} wins! They can respond to this message in the next 30 seconds to change {ctx.user.mention}\'s nickname!')
+            # Wait for the target to respond
+            try:
+                message = await self.bot.wait_for('message', check=lambda m: m.author.id == user.id, timeout=30)
+            except asyncio.TimeoutError:
+                # Edit the message to say that the target didn't respond
+                await message.edit(content=f'{user.mention} didn\'t respond in time!')
+            else:
+                # If the target responds, change the challenger's nickname
+                await ctx.user.edit(nick=message.content)
+                await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been changed!')
+        else:
+            await ctx.channel.send(f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!')
+            # Wait for the challenger to respond
+            try:
+                message = await self.bot.wait_for('message', check=lambda m: m.author.id == ctx.user.id, timeout=30)
+            except asyncio.TimeoutError:
+                # Edit the message to say that the challenger didn't respond
+                await message.edit(content=f'{ctx.user.mention} didn\'t respond in time!')
+            else:
+                # If the challenger responds, try to change the target's nickname
+                try:
+                    await user.edit(nick=message.content)
+                except discord.Forbidden:
+                    # If the bot doesn't have permission, let the players know
+                    await ctx.channel.send(f'I don\'t have permission to change {user.mention}\'s nickname! Hopefully they\'ll change it themselves...')
+                else:
+                    # If the bot does have permission, let the players know
+                    await ctx.channel.send(f'{user.mention}\'s nickname has been changed!')
+
+        # Remove the players from the set of challenges
+        self.challenges.remove(user.id)
+        self.challenges.remove(ctx.user.id)
+
+
+
+
 
 async def setup(bot):
     await bot.add_cog(Silly(bot))

@@ -28,6 +28,33 @@ class YesNoView(discord.ui.View):
         await interaction.response.edit_message(view=self)
         self.stop()
 
+# Yes or No button with specified user
+class YesNoUserView(discord.ui.View):
+    def __init__(self, ctx, user):
+        super().__init__()
+        self.ctx = ctx
+        self.user = user
+        self.value = None
+
+    @discord.ui.button(label='Yes', style=discord.ButtonStyle.green)
+    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = True
+        # disable the buttons
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    @discord.ui.button(label='No', style=discord.ButtonStyle.red)
+    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = False
+        # disable the buttons
+        self.clear_items()
+        await interaction.response.edit_message(view=self)
+        self.stop()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user == self.user
+
 def role_rank(role: int) -> int:
     """Queries the database for the rank of a role, returns 0 if not found"""
     db = sqlite3.connect('database.db')
