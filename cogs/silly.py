@@ -326,8 +326,11 @@ class Silly(commands.Cog):
             result = f'It\'s heads! {user.mention} wins! They can respond to this message in the next 30 seconds to change {ctx.user.mention}\'s nickname!'
 
             # If the target has lost more than 2 times in a row, add it to the message
-            if self.streak[ctx.user.id] > 2:
-                result += f' {ctx.user.mention} has lost {self.streak[user.id]} times in a row!'
+            try:
+                if self.streak[ctx.user.id] > 2:
+                    result += f' {ctx.user.mention} has lost {self.streak[user.id]} times in a row!'
+            except KeyError:
+                pass
 
             await ctx.channel.send(result)
 
@@ -364,8 +367,11 @@ class Silly(commands.Cog):
             result = f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!'
 
             # If the target has lost more than 2 times in a row, add it to the message
-            if self.streak[user.id] > 2:
-                result += f' {user.mention} has lost {self.streak[user.id]} times in a row!'
+            try:
+                if self.streak[user.id] > 2:
+                    result += f' {user.mention} has lost {self.streak[user.id]} times in a row!'
+            except KeyError:
+                pass
 
             await ctx.channel.send(result)
 
