@@ -164,7 +164,7 @@ async def update(ctx):
     repo.remotes.origin.pull()
     print(f'Updated to commit {repo.head.object.hexsha}')
     # Print that we updated the repo and the current commit
-    await ctx.send(f'Updated to commit {repo.head.object.hexsha}')
+    await ctx.send(f'Updated to commit {repo.head.object.hexsha}, commit message: {repo.head.object.message}')
 
 # Connect to the database, run a query, and return the result
 # Owner only, not a slash command
