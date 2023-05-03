@@ -6,3 +6,6 @@ CREATE TABLE IF NOT EXISTS suggest (
     channel_id BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (server_id)
 );
+
+-- Add event_id column to suggest table
+ALTER TABLE suggest ADD COLUMN event_id BIGINT NOT NULL DEFAULT 0;

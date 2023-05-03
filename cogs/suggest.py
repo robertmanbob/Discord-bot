@@ -49,6 +49,43 @@ class Suggest(commands.Cog):
 
         # Send a confirmation message
         await ctx.response.send_message('Suggestion sent!', ephemeral=True)
+
+    # Slash command for suggesting events
+    # This will relay the suggestion to a designated channel
+    @app_commands.command(name='suggestevent', description='Suggest a server event')
+    async def suggestevent(self, ctx: discord.Interaction, *, suggestion: str) -> None:
+        # Check if the suggestion is too long
+        if len(suggestion) > 2000:
+            await ctx.response.send_message('Suggestion too long! Please keep it under 2000 characters.', ephemeral=True)
+            return
+
+        # Check if suggestions are enabled, if so, get the suggestion channel
+        self.c.execute('SELECT enabled, event_id FROM suggest WHERE server_id = ?', (ctx.guild.id,))
+        enabled, suggestion_channel = self.c.fetchone()
+
+        # If suggestions are not enabled, don't send the suggestion
+        if not enabled:
+            await ctx.response.send_message('Suggestions are not enabled!', ephemeral=True)
+            return
+
+        # If the suggestion channel is not set, don't send the suggestion
+        if suggestion_channel == 0:
+            await ctx.response.send_message('Suggestion channel not set!', ephemeral=True)
+            return
+
+        # Get the suggestion channel
+        suggestion_channel = self.bot.get_channel(suggestion_channel)
+
+        # Create an embed for the suggestion
+        embed = discord.Embed(title='Event Suggestion', description=suggestion, color=ctx.user.color)
+        embed.set_author(name=ctx.user.name, icon_url=ctx.user.avatar.url)
+        embed.set_footer(text=f'User ID: {ctx.user.id}')
+
+        # Send the suggestion
+        await suggestion_channel.send(embed=embed)
+
+        # Send a confirmation message
+        await ctx.response.send_message('Suggestion sent!', ephemeral=True)
     
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Suggest(bot))

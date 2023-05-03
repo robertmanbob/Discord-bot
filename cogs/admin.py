@@ -172,6 +172,15 @@ class Admin(commands.Cog):
         self.db.commit()
         await ctx.send(f'Suggestions channel set to {ctx.channel.name}')
 
+    # Set event_id channel
+    @suggest.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def setevent(self, ctx: commands.Context):
+        # Update the channel ID in the database to the current channel
+        self.c.execute('UPDATE suggest SET event_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
+        self.db.commit()
+        await ctx.send(f'Event channel set to {ctx.channel.name}')
+
     # Group for the welcome message settings
     @admin.group(name='welcome', description='Welcome message settings', invoke_without_command=True)
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
