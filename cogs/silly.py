@@ -269,6 +269,10 @@ class Silly(commands.Cog):
     # Slash command
     @app_commands.command(name='coinflip', description='Challenge someone to a coinflip with a nickname change on the line.')
     async def coinflip(self, ctx: discord.Interaction, target: discord.User):
+        # Disabled for now :(
+        await ctx.response.send_message('This command is disabled for now, sorry!', ephemeral=True)
+        return
+
         # Helper function to TRY to change a user's nickname
         async def change_nickname(user: discord.User, nickname: str) -> bool:
             try:
