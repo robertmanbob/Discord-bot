@@ -277,7 +277,7 @@ class Silly(commands.Cog):
                 await ctx.response.send_message(f'I don\'t have permission to change {user.mention}\'s nickname! Hopefully they\'ll change it themselves', ephemeral=True)
                 return False
             except discord.HTTPException: # If the nickname is too long
-                await ctx.response.send_message(f'Discord didn\'t like"{nickname}", sorry!', ephemeral=True)
+                await ctx.response.send_message(f'Discord didn\'t like "{nickname}", sorry!', ephemeral=True)
                 return False
             else:
                 return True
