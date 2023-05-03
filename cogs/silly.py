@@ -274,7 +274,7 @@ class Silly(commands.Cog):
             try:
                 await user.edit(nick=nickname)
             except discord.Forbidden: # If the bot doesn't have permission to change the nickname
-                await ctx.response.send_message(f'I don\'t have permission to change {user.mention}\'s nickname! Hopefully they\'ll change it yourself', ephemeral=True)
+                await ctx.response.send_message(f'I don\'t have permission to change {user.mention}\'s nickname! Hopefully they\'ll change it themselves', ephemeral=True)
                 return False
             except discord.HTTPException: # If the nickname is too long
                 await ctx.response.send_message(f'Discord didn\'t like"{nickname}", sorry!', ephemeral=True)
