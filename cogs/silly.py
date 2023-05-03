@@ -26,6 +26,9 @@ class Silly(commands.Cog):
         # List of ongoing challenges
         self.challenges = set()
 
+        # Losing streak dictionary, lists the number of losses in a row for each user by id
+        self.streak = {}
+
 
     # Listener for on_message, handling name invoking
     @commands.Cog.listener()
@@ -308,7 +311,26 @@ class Silly(commands.Cog):
 
         # Depending on the result, let the players know who won
         if coin == 0:
-            result = await ctx.channel.send(f'It\'s heads! {user.mention} wins! They can respond to this message in the next 30 seconds to change {ctx.user.mention}\'s nickname!')
+            # Update losing streak, adding if the user's ID is already in the dictionary
+            try:
+                self.streak[ctx.user.id] += 1
+            except KeyError:
+                self.streak[ctx.user.id] = 1
+
+            # Remove the winner from the streak dictionary
+            try:
+                del self.streak[user.id]
+            except KeyError:
+                pass
+
+            result = f'It\'s heads! {user.mention} wins! They can respond to this message in the next 30 seconds to change {ctx.user.mention}\'s nickname!'
+
+            # If the target has lost more than 2 times in a row, add it to the message
+            if self.streak[ctx.user.id] > 2:
+                result += f' {ctx.user.mention} has lost {self.streak[user.id]} times in a row!'
+
+            await ctx.channel.send(result)
+
             # Wait for the target to respond
             try:
                 message = await self.bot.wait_for('message', check=lambda m: m.author.id == user.id, timeout=30)
@@ -327,7 +349,26 @@ class Silly(commands.Cog):
                     await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been changed!')
                     
         else:
-            result = await ctx.channel.send(f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!')
+            # Update losing streak, adding if the user's ID is already in the dictionary
+            try:
+                self.streak[user.id] += 1
+            except KeyError:
+                self.streak[user.id] = 1
+
+            # Remove the winner from the streak dictionary
+            try:
+                del self.streak[ctx.user.id]
+            except KeyError:
+                pass
+
+            result = f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!'
+
+            # If the target has lost more than 2 times in a row, add it to the message
+            if self.streak[user.id] > 2:
+                result += f' {user.mention} has lost {self.streak[user.id]} times in a row!'
+
+            await ctx.channel.send(result)
+
             # Wait for the challenger to respond
             try:
                 message = await self.bot.wait_for('message', check=lambda m: m.author.id == ctx.user.id, timeout=30)
