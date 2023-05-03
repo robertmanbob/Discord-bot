@@ -308,13 +308,13 @@ class Silly(commands.Cog):
 
         # Depending on the result, let the players know who won
         if coin == 0:
-            await ctx.channel.send(f'It\'s heads! {user.mention} wins! They can respond to this message in the next 30 seconds to change {ctx.user.mention}\'s nickname!')
+            result = await ctx.channel.send(f'It\'s heads! {user.mention} wins! They can respond to this message in the next 30 seconds to change {ctx.user.mention}\'s nickname!')
             # Wait for the target to respond
             try:
                 message = await self.bot.wait_for('message', check=lambda m: m.author.id == user.id, timeout=30)
             except asyncio.TimeoutError:
                 # Edit the message to say that the target didn't respond
-                await message.edit(content=f'{user.mention} didn\'t respond in time!')
+                await result.edit(content=f'{user.mention} won but didn\'t respond in time!')
             else:
                 # If the target responds, try to change the challenger's nickname
                 try:
@@ -327,13 +327,13 @@ class Silly(commands.Cog):
                     await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been changed!')
                     
         else:
-            await ctx.channel.send(f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!')
+            result = await ctx.channel.send(f'It\'s tails! {ctx.user.mention} wins! They can respond to this message in the next 30 seconds to change {user.mention}\'s nickname!')
             # Wait for the challenger to respond
             try:
                 message = await self.bot.wait_for('message', check=lambda m: m.author.id == ctx.user.id, timeout=30)
             except asyncio.TimeoutError:
                 # Edit the message to say that the challenger didn't respond
-                await message.edit(content=f'{ctx.user.mention} didn\'t respond in time!')
+                await result.edit(content=f'{ctx.user.mention} won but didn\'t respond in time!')
             else:
                 # If the challenger responds, try to change the target's nickname
                 try:
