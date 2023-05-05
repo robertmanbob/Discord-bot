@@ -15,6 +15,10 @@ class Welcome(commands.Cog):
         self.db = sqlite3.connect('database.db')
         self.c = self.db.cursor()
 
+        # Override goodbyes, in case we want to give someone a custom goodbye
+        # Dictionary with a user's ID as the key and a goodbye message as the value
+        self.goodbyes = {}
+
     # Join listener
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -63,6 +67,17 @@ class Welcome(commands.Cog):
         """Test the welcome listener"""
         await self.on_member_join(ctx.author)
 
+    # Add a custom goodbye
+    # Owner only
+    @commands.command()
+    @commands.is_owner()
+    async def add_goodbye(self, ctx: commands.Context, user: discord.User, *, goodbye: str):
+        """Add a custom goodbye message for a user"""
+        # Add the goodbye to the dictionary
+        self.goodbyes[user.id] = goodbye
+        # Send a confirmation message
+        await ctx.send(f"Added goodbye for {user.name}#{user.discriminator}")
+
     # Leave listener
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -74,6 +89,13 @@ class Welcome(commands.Cog):
                    ". Oh well. Anyways, ",
                    ". I don't know them, but fuck em'",
                    ", trash."]
+        
+        # If the user has a custom goodbye, use it as the goodbye message. Else, select insult.
+        try:
+            insult = self.goodbyes[member.id]
+        except KeyError:
+            insult = random.choice(insults)
+
         # Query the database for the enabled status and channel
         self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (member.guild.id,))
         result = self.c.fetchone()
@@ -88,7 +110,7 @@ class Welcome(commands.Cog):
         if channel is None:
             return
         # Send the message in an embed with a random insult
-        embed = discord.Embed(description=f"Looks like {member.name}#{member.discriminator} left" + random.choice(insults))
+        embed = discord.Embed(description=f"Looks like {member.name}#{member.discriminator} left" + insult)
         await channel.send(embed=embed)
 
     # Test leave listener
