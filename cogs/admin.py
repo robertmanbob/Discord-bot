@@ -238,7 +238,7 @@ class Admin(commands.Cog):
     # Purge reactions from a message, minus the sender's
     @admin.command()
     @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    async def purge(self, ctx: commands.Context, message: discord.Message):
+    async def purgereactions(self, ctx: commands.Context, message: discord.Message):
         # Get the message's reactions
         reactions = message.reactions
         # Get the user's ID
