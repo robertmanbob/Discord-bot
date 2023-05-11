@@ -234,6 +234,28 @@ class Admin(commands.Cog):
         self.c.execute('UPDATE welcome SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
         self.db.commit()
         await ctx.send(f'Welcome messages channel set to {ctx.channel.name}')
+
+    # Purge reactions from a message, minus the sender's
+    @admin.command()
+    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
+    async def purge(self, ctx: commands.Context, message: discord.Message):
+        # Get the message's reactions
+        reactions = message.reactions
+        # Get the user's ID
+        user_id = ctx.author.id
+        # Iterate through the reactions
+        for reaction in reactions:
+            # Get the users who reacted to the message
+            users = await reaction.users().flatten()
+            # Iterate through the users
+            for user in users:
+                # If the user is not the message's author or the bot, remove their reaction
+                if user.id != user_id and user.id != self.bot.user.id:
+                    try:
+                        await reaction.remove(user)
+                    except discord.errors.Forbidden:
+                        await ctx.send('I do not have permission to remove reactions')
+                        return
         
 
 async def setup(bot: commands.Bot):
