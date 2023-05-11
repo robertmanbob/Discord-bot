@@ -78,6 +78,17 @@ class Welcome(commands.Cog):
         # Send a confirmation message
         await ctx.send(f"Added goodbye for {user.name}#{user.discriminator}")
 
+    # Ignore a leaver
+    # Owner only
+    @commands.command()
+    @commands.is_owner()
+    async def ignore_leave(self, ctx: commands.Context, user: discord.User):
+        """Ignore a user leaving"""
+        # Add the user to the dictionary
+        self.goodbyes[user.id] = ""
+        # Send a confirmation message
+        await ctx.send(f"Ignored {user.name}#{user.discriminator}")
+
     # Leave listener
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -93,6 +104,9 @@ class Welcome(commands.Cog):
         # If the user has a custom goodbye, use it as the goodbye message. Else, select insult.
         try:
             insult = self.goodbyes[member.id]
+            # If the leave message is "", ignore the leaver
+            if insult == "":
+                return
         except KeyError:
             insult = random.choice(insults)
 
