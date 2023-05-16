@@ -269,6 +269,16 @@ class Admin(commands.Cog):
 
         await ctx.send(f'{count} reactions purged')
 
+    # Delete a specific message.
+    @admin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def delete(self, ctx: commands.Context, message_id: int):
+        # Get the message object
+        message = await ctx.channel.fetch_message(message_id)
+        await message.delete()
+        # Delete the invoking message
+        await ctx.message.delete()
+
         
 
 async def setup(bot: commands.Bot):
