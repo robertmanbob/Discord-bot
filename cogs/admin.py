@@ -1,5 +1,6 @@
 import discord
 import sqlite3
+import asyncio
 from discord.ext import commands
 from utility import get_role_of_rank
 
@@ -235,27 +236,39 @@ class Admin(commands.Cog):
         self.db.commit()
         await ctx.send(f'Welcome messages channel set to {ctx.channel.name}')
 
-    # Purge reactions from a message, minus the sender's
+    # Purge a specific reaction a specific message to protect under 18s
     @admin.command()
-    @commands.check_any(commands.has_permissions(manage_messages=True), commands.is_owner())
-    async def purgereactions(self, ctx: commands.Context, message: discord.Message):
-        # Get the message's reactions
-        reactions = message.reactions
-        # Get the user's ID
-        user_id = ctx.author.id
-        # Iterate through the reactions
-        for reaction in reactions:
-            # Get the users who reacted to the message
-            users = await reaction.users().flatten()
-            # Iterate through the users
-            for user in users:
-                # If the user is not the message's author or the bot, remove their reaction
-                if user.id != user_id and user.id != self.bot.user.id:
-                    try:
-                        await reaction.remove(user)
-                    except discord.errors.Forbidden:
-                        await ctx.send('I do not have permission to remove reactions')
-                        return
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def purgereact(self, ctx: commands.Context, message_id: int, emoji: str):
+        print(f"Purge react: {message_id}, {emoji}")
+        # Make the emoji into a discord emoji object
+        emoji = await commands.PartialEmojiConverter().convert(ctx, emoji)
+        
+        users = []
+        count = 0
+
+        # Get the message object
+        message = await ctx.channel.fetch_message(message_id)
+
+        # Get the list of users who reacted with the specified reaction
+        for reaction in message.reactions:
+            if reaction.emoji.id == emoji.id:
+                print("Reaction found")
+                users = reaction.users()
+                break
+
+        # Remove the reaction from each user
+        async for user in users:
+            # If the reactor is the sender of the message, skip them
+            if user == message.author:
+                continue
+            await message.remove_reaction(emoji, user)
+            count += 1
+            # Sleep for 0.5 seconds to avoid rate limits
+            await asyncio.sleep(0.5)
+
+        await ctx.send(f'{count} reactions purged')
+
         
 
 async def setup(bot: commands.Bot):
