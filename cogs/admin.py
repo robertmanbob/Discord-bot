@@ -259,8 +259,8 @@ class Admin(commands.Cog):
 
         # Remove the reaction from each user
         async for user in users:
-            # If the reactor is the sender of the message, skip them
-            if user == message.author:
+            # If the reactor is the sender of the message or a bot, skip
+            if user == message.author or user.bot:
                 continue
             await message.remove_reaction(emoji, user)
             count += 1
