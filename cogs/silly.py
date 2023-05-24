@@ -1,8 +1,10 @@
 import discord
-import sqlite3
 import random
 import asyncio
 import codecs
+import sqlalchemy
+from sqlalchemy.orm import Session
+from models import NameReply
 from discord.ext import commands
 from discord import app_commands
 from utility import YesNoView, YesNoUserView
@@ -11,14 +13,12 @@ class Silly(commands.Cog):
     """Silly commands"""
     def __init__(self, bot):
         self.bot = bot
-        self.db = sqlite3.connect('database.db')
-        self.c = self.db.cursor()
 
         # Import the namereply table into a dictionary
-        # namereply schema: (user_name, reply_url)
         self.namereply = {}
-        for row in self.c.execute('SELECT * FROM namereply'):
-            self.namereply[row[0]] = row[1]
+        with self.bot.db_session.begin() as session:
+            for row in session.query(NameReply):
+                self.namereply[row.user_name] = row.image_url
 
         # List of ongoing curses
         self.curses = set()
@@ -50,8 +50,8 @@ class Silly(commands.Cog):
         # Add the name and url to the dictionary
         self.namereply[name.lower()] = url
         # Add the name and url to the database
-        self.c.execute('INSERT INTO namereply VALUES (?, ?)', (name.lower(), url))
-        self.db.commit()
+        with self.bot.db_session.begin() as session:
+            session.add(NameReply(user_name=name.lower(), image_url=url, server_id=ctx.guild.id))
         await ctx.send(f'Added name {name.lower()}')
 
     # Admin or bot owner only, not a slash command
@@ -62,8 +62,9 @@ class Silly(commands.Cog):
         # Remove the name from the dictionary
         del self.namereply[name.lower()]
         # Remove the name from the database
-        self.c.execute('DELETE FROM namereply WHERE user_name = ?', (name.lower(),))
-        self.db.commit()
+        with self.bot.db_session.begin() as session:
+            session.query(NameReply).filter(NameReply.user_name == name.lower()).delete()
+            session.commit()
         await ctx.send(f'Removed name {name.lower()}')
 
     # Bot owner only, not a slash command
@@ -264,123 +265,6 @@ class Silly(commands.Cog):
         # If not, let them know
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
-
-    # Coin flip nickname challenge
-    # Slash command
-    @app_commands.command(name='coinflip', description='Challenge someone to a coinflip with a nickname change on the line.')
-    async def coinflip(self, ctx: discord.Interaction, target: discord.User):
-        # Disabled for now :(
-        await ctx.response.send_message('This command is disabled for now, sorry!', ephemeral=True)
-        return
-
-        # Helper function to TRY to change a user's nickname
-        async def change_nickname(user: discord.User, nickname: str) -> bool:
-            try:
-                await user.edit(nick=nickname)
-            except discord.Forbidden: # If the bot doesn't have permission to change the nickname
-                await ctx.response.send_message(f'I don\'t have permission to change {user.mention}\'s nickname! Hopefully they\'ll change it themselves', ephemeral=True)
-                return False
-            except discord.HTTPException: # If the nickname is too long
-                await ctx.response.send_message(f'Discord didn\'t like "{nickname}", sorry!', ephemeral=True)
-                return False
-            else:
-                return True
-
-        # Sanity checks
-        # If the target is the person invoking the command, reject it
-        if target.id == ctx.user.id:
-            await ctx.response.send_message('You can\'t challenge yourself!', ephemeral=True)
-            return
-        # If the target is already in a challenge, reject it
-        if target.id in self.challenges:
-            await ctx.response.send_message(f'{target.mention} is already in a challenge!', ephemeral=True)
-            return
-        # If the caller is already in a challenge, reject it
-        if ctx.user.id in self.challenges:
-            await ctx.response.send_message('You\'re already in a challenge!', ephemeral=True)
-            return
-
-        # Add both the caller and the target to the set of challenges
-        self.challenges.add(ctx.user.id)
-        self.challenges.add(target.id)
-
-        # Create the YesNoUserView for the target
-        view = YesNoUserView(ctx, target)
-
-        await ctx.response.send_message(f'{target.mention}, {ctx.user.mention} has challenged you to a coinflip at the risk of a nickname change! Do you accept?', view=view)
-
-        # Wait for the target to respond
-        timed_out = await view.wait()
-
-        # If the target didn't respond, let the caller know
-        if timed_out:
-            await ctx.channel.send(f'{target.mention} didn\'t respond in time!')
-            self.challenges.remove(ctx.user.id)
-            self.challenges.remove(target.id)
-            return
-        
-        # If the target said no, let the caller know
-        if not view.value:
-            await ctx.channel.send(f'{target.mention} declined the challenge!')
-            self.challenges.remove(ctx.user.id)
-            self.challenges.remove(target.id)
-            return
-        
-        # If the target said yes, let the caller know
-        if view.value:
-            await ctx.channel.send(f'{target.mention} accepted the challenge! I will now flip a coin to decide your fate...')
-
-        # Flip a coin
-        coin = random.choice(['heads', 'tails'])
-
-        # If the coin landed on heads, ask the caller for a string to change the target's nickname to
-        if coin == 'heads':
-            await ctx.channel.send(f'It landed on heads! {ctx.user.mention}, what should {target.mention}\'s new nickname be?')
-            # Wait for the caller to respond
-            try:
-                message = await self.bot.wait_for('message', check=lambda m: m.author.id == ctx.user.id, timeout=30)
-            except asyncio.TimeoutError: # If the caller didn't respond in time, let them know
-                await ctx.channel.send(f'{ctx.user.mention} didn\'t respond in time! {target.mention} is safe... for now.')
-                self.challenges.remove(ctx.user.id)
-                self.challenges.remove(target.id)
-                return
-            # If the caller responded, try to change the target's nickname
-            else:
-                if await change_nickname(target, message.content):
-                    await ctx.channel.send(f'{target.mention}\'s nickname has been changed to {message.content}!')
-                    self.challenges.remove(ctx.user.id)
-                    self.challenges.remove(target.id)
-                    return
-                else:
-                    self.challenges.remove(ctx.user.id)
-                    self.challenges.remove(target.id)
-                    return
-        # If the coin landed on tails, ask the target for a string to change the caller's nickname to
-        if coin == 'tails':
-            await ctx.channel.send(f'It landed on tails! {target.mention}, what should {ctx.user.mention}\'s new nickname be?')
-            # Wait for the target to respond
-            try:
-                message = await self.bot.wait_for('message', check=lambda m: m.author.id == target.id, timeout=30)
-            except asyncio.TimeoutError: # If the target didn't respond in time, let them know
-                await ctx.channel.send(f'{target.mention} didn\'t respond in time! {ctx.user.mention} is safe... for now.')
-                self.challenges.remove(ctx.user.id)
-                self.challenges.remove(target.id)
-                return
-            # If the target responded, try to change the caller's nickname
-            else:
-                if await change_nickname(ctx.user, message.content):
-                    await ctx.channel.send(f'{ctx.user.mention}\'s nickname has been changed to {message.content}!')
-                    self.challenges.remove(ctx.user.id)
-                    self.challenges.remove(target.id)
-                    return
-                else:
-                    self.challenges.remove(ctx.user.id)
-                    self.challenges.remove(target.id)
-                    return
-        
-        # This should never happen, but just in case
-        # Ping the bot owner
-        await ctx.channel.send(f'Uh oh, something went wrong! {self.bot.owner.mention}, please check the logs!')
 
     # Coin flip player reset debug
     # Not a slash command

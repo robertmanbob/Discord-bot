@@ -23,9 +23,9 @@ def import_setting(setting: str, value: str, server_id: int):
     with Session(new_db) as conn:
         objects = []
         # Check if the server exists in the new database.
-        server = conn.query(Server).filter(Server.id == server_id).first()
+        server = conn.query(Server).filter(Server.server_id == server_id).first()
         if server is None:
-            new_server = Server(id=server_id)
+            new_server = Server(server_id=server_id)
             objects.append(new_server)
         # Insert the setting into the new database.
         new_setting = ServerSettings(server_id=server_id, setting=setting, value=value)
@@ -36,12 +36,14 @@ def import_setting(setting: str, value: str, server_id: int):
 
 # Import all settings from the old database to the new database.
 # Roleping
-# Row format of the old Roleping table: (server_id, timer_duration, rpenabled, rprole)
+# Row format of the old Roleping table: (server_id, timer_duration, rpenabled, rprole, next_role_ping, rp_min_rank)
 print('Importing roleping settings...')
 for row in old_db.execute('SELECT * FROM roleping'):
     import_setting('rp_timer_duration', str(row[1]), row[0])
     import_setting('rp_enabled', str(row[2]), row[0])
     import_setting('rp_role', str(row[3]), row[0])
+    import_setting('rp_next_role_ping', str(row[4]), row[0])
+    import_setting('rp_min_rank', str(row[5]), row[0])
 
 # Suggest
 # Row format of the old Suggest table: (server_id, enabled, suggestchannel, eventchannel)
@@ -66,9 +68,9 @@ for row in old_db.execute('SELECT * FROM ranks'):
     with Session(new_db) as conn:
         objects = []
         # Check if the server exists in the new database.
-        server = conn.query(Server).filter(Server.id == row[0]).first()
+        server = conn.query(Server).filter(Server.server_id == row[0]).first()
         if server is None:
-            new_server = Server(id=row[0])
+            new_server = Server(server_id=row[0])
             objects.append(new_server)
         # Insert the setting into the new database.
         new_rank = Rank(server_id=row[0], role_id=row[1], rank=row[2])

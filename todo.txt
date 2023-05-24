@@ -1,2 +1,1 @@
-Standardize to either passing objects or IDs around.
-f format all strings
+move listroles out of roleping

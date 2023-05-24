@@ -1,19 +1,15 @@
 import discord
-import sqlite3
+# import sqlite3
 import asyncio
+import sqlalchemy
+import logging
+from sqlalchemy.orm import Session
 from discord.ext import commands
 from utility import get_role_of_rank
-
-def check_server(serverid: int, c: sqlite3.Cursor, conn: sqlite3.Connection):
-    c.execute('SELECT * FROM roleping WHERE server_id=?', (serverid,))
-    if c.fetchone() is None:
-        c.execute('INSERT INTO roleping VALUES (?, ?, ?, ?, ?)', (serverid, 60, 0, 0, 0))
-        conn.commit()
+from models import get_setting, set_setting, check_setting, ServerSettings, Server, Rank, NameReply
 
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
-        self.db = sqlite3.connect('database.db')
-        self.c = self.db.cursor()
         self.bot = bot
 
     # Admin command group
@@ -42,10 +38,31 @@ class Admin(commands.Cog):
     @admin.group(name='vcadmin', description='VC ping admin commands and settings', invoke_without_command=True)
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def vcadmin(self, ctx: commands.Context):
-        check_server(ctx.guild.id, self.c, self.db)
-        # Get the current settings from the database
-        self.c.execute('SELECT timer_duration, rpenabled, role_id, min_rank FROM roleping WHERE server_id=?', (ctx.guild.id,))
-        time, enabled, role, min_rank = self.c.fetchone()
+        # Check that the settings exist in the database
+        # rp_timer_duration - Time between role pings in minutes
+        # rp_enabled - Whether role pings are enabled
+        # rp_role - The role to ping
+        # rp_min_rank - The minimum rank to use the /pingvc command
+        role, time, enabled, min_rank = 0, 0, 0, 0
+        with self.bot.db_session.begin() as c:
+            if not check_setting(ctx.guild.id, c, 'rp_timer_duration', '0'):
+                await ctx.send('Could not get role ping timer duration')
+                return
+            if not check_setting(ctx.guild.id, c, 'rp_enabled', '0'):
+                await ctx.send('Could not get role ping enabled')
+                return
+            if not check_setting(ctx.guild.id, c, 'rp_role', '0'):
+                await ctx.send('Could not get role ping role')
+                return
+            if not check_setting(ctx.guild.id, c, 'rp_min_rank', '0'):
+                await ctx.send('Could not get role ping minimum rank')
+                return
+            # Get the settings from the database
+            time = get_setting(c, ctx.guild.id, 'rp_timer_duration')
+            enabled = get_setting(c, ctx.guild.id, 'rp_enabled')
+            role = get_setting(c, ctx.guild.id, 'rp_role')
+            min_rank = get_setting(c, ctx.guild.id, 'rp_min_rank')
+
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title='Role Admin', description='Usage: $admin vcadmin <subcommand> <arguments>')
             embed.add_field(name='Subcommands:', value="""$admin vcadmin timer <time> - Set the time between role pings in minutes
@@ -54,8 +71,8 @@ class Admin(commands.Cog):
             $admin vcadmin minrank <rank> - Set the minimum rank to use the /pingvc command""", inline=False)
             embed.add_field(name='Current Settings:', value=f"""Time: {time} minutes
             Enabled: {bool(enabled)}
-            Role: {role} ({ctx.guild.get_role(role).name if role != 0 else ''})
-            Minimum Level: {'everyone' if min_rank == 0 else get_role_of_rank(ctx.guild, min_rank)}""", inline=False)
+            Role: {role} ({ctx.guild.get_role(int(role)).name if role != 0 else ''})
+            Minimum rank: {min_rank}""", inline=False)
             embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
             await ctx.send(embed=embed)
 
@@ -67,16 +84,21 @@ class Admin(commands.Cog):
             await ctx.send('Invalid time')
             return
         # Get the old time and next ping time from the database
-        self.c.execute('SELECT timer_duration, next_roleping FROM roleping WHERE server_id=?', (ctx.guild.id,))
-        old_time, next_ping_time = self.c.fetchone()
+        # self.c.execute('SELECT timer_duration, next_roleping FROM roleping WHERE server_id=?', (ctx.guild.id,))
+        # old_time, next_ping_time = self.c.fetchone()
+        with self.bot.db_session.begin() as c:
+            old_time = int(get_setting(c, ctx.guild.id, 'rp_timer_duration'))
+            check_setting(ctx.guild.id, c, 'rp_next_ping', '0')
+            next_ping_time = int(get_setting(c, ctx.guild.id, 'rp_next_ping'))
 
         # Subtract the old time from the next ping time, then add the new time
         # this will update the cooldown to the new time
         next_ping_time = next_ping_time - (old_time * 60) + (time * 60)
 
         # Update the timer duration and next ping time in the database
-        self.c.execute('UPDATE roleping SET timer_duration=?, next_roleping=? WHERE server_id=?', (time, next_ping_time, ctx.guild.id))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'rp_timer_duration', str(time))
+            set_setting(c, ctx.guild.id, 'rp_next_ping', str(next_ping_time))
 
         await ctx.send(f'Timer set to {time} minutes.')
 
@@ -84,16 +106,16 @@ class Admin(commands.Cog):
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def vc_enable(self, ctx: commands.Context):
         # Update the enabled status in the database
-        self.c.execute('UPDATE roleping SET rpenabled=1 WHERE server_id=?', (ctx.guild.id,))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'rp_enabled', '1')
         await ctx.send('Role pings enabled')
 
     @vcadmin.command(name='disable', aliases=['vc_disable'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def vc_disable(self, ctx: commands.Context):
         # Update the enabled status in the database
-        self.c.execute('UPDATE roleping SET rpenabled=0 WHERE server_id=?', (ctx.guild.id,))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'rp_enabled', '0')
         await ctx.send('Role pings disabled')
     
     @vcadmin.command()
@@ -105,8 +127,8 @@ class Admin(commands.Cog):
             return
         role = roleid.id
         # Update the role ID in the database
-        self.c.execute('UPDATE roleping SET role_id=? WHERE server_id=?', (role, ctx.guild.id))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'rp_role', str(role))
         await ctx.send(f'Role set to {roleid.name}')
 
     @vcadmin.command()
@@ -117,25 +139,22 @@ class Admin(commands.Cog):
             await ctx.send('Invalid rank')
             return
         # Update the minimum rank in the database
-        self.c.execute('UPDATE roleping SET min_rank=? WHERE server_id=?', (rank, ctx.guild.id))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'rp_min_rank', str(rank))
         await ctx.send(f'Minimum rank set to {get_role_of_rank(ctx.guild, rank)}')
 
     # Suggest admin command sub-group
     @admin.group(name='suggest', description='Suggest admin commands and settings', invoke_without_command=True)
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def suggest(self, ctx: commands.Context):
-        # Suggest db table: server_id, enabled, channel_id
+        # Suggest db table: (sg_enabled, sg_channel)
         # Check whether the server is in the database or not
-        self.c.execute('SELECT EXISTS(SELECT 1 FROM suggest WHERE server_id=?)', (ctx.guild.id,))
-        exists = self.c.fetchone()[0]
-        if not exists:
-            self.c.execute('INSERT INTO suggest VALUES (?, 0, 0)', (ctx.guild.id,))
-            self.db.commit()
-            await ctx.send('Server added to database')
-        # Get the channel ID and enabled status from the database
-        self.c.execute('SELECT enabled, channel_id FROM suggest WHERE server_id=?', (ctx.guild.id,))
-        enabled, channel = self.c.fetchone()
+        with self.bot.db_session.begin() as c:
+            check_setting(ctx.guild.id, c, 'sg_enabled', '0')
+            check_setting(ctx.guild.id, c, 'sg_channel', '0')
+            # Get the channel ID and enabled status from the database
+            enabled = int(get_setting(c, ctx.guild.id, 'sg_enabled'))
+            channel = int(get_setting(c, ctx.guild.id, 'sg_channel'))
 
         # Create an embed to display the current settings
         embed = discord.Embed(title='Suggest Admin', description='Usage: $admin suggest <subcommand> <arguments>')
@@ -153,24 +172,24 @@ class Admin(commands.Cog):
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def suggest_enable(self, ctx: commands.Context):
         # Update the enabled status in the database
-        self.c.execute('UPDATE suggest SET enabled=1 WHERE server_id=?', (ctx.guild.id,))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'sg_enabled', '1')
         await ctx.send('Suggestions enabled')
 
     @suggest.command(name='disable', aliases=['suggest_disable'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def suggest_disable(self, ctx: commands.Context):
         # Update the enabled status in the database
-        self.c.execute('UPDATE suggest SET enabled=0 WHERE server_id=?', (ctx.guild.id,))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'sg_enabled', '0')
         await ctx.send('Suggestions disabled')
 
     @suggest.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def setchannel(self, ctx: commands.Context):
         # Update the channel ID in the database to the current channel
-        self.c.execute('UPDATE suggest SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'sg_channel', str(ctx.channel.id))
         await ctx.send(f'Suggestions channel set to {ctx.channel.name}')
 
     # Set event_id channel
@@ -178,27 +197,25 @@ class Admin(commands.Cog):
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def setevent(self, ctx: commands.Context):
         # Update the channel ID in the database to the current channel
-        self.c.execute('UPDATE suggest SET event_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'event_id', str(ctx.channel.id))
         await ctx.send(f'Event channel set to {ctx.channel.name}')
 
     # Group for the welcome message settings
+    # Settings: wc_enabled, wc_channel
     @admin.group(name='welcome', description='Welcome message settings', invoke_without_command=True)
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def welcome(self, ctx: commands.Context):
-        # Welcome db table: server_id, wenabled, channel_id
         # Check whether the server is in the database or not
-        self.c.execute('SELECT EXISTS(SELECT 1 FROM welcome WHERE server_id=?)', (ctx.guild.id,))
-        exists = self.c.fetchone()[0]
-        if not exists:
-            self.c.execute('INSERT INTO welcome VALUES (?, 0, 0)', (ctx.guild.id,))
-            self.db.commit()
-            # Let the user know that the server was added to the database and re-run the command
-            await ctx.send('Server added to database')
+        with self.bot.db_session.begin() as c:
+            if not check_setting(ctx.guild.id, c, 'wc_enabled', '0') and not check_setting(ctx.guild.id, c, 'wc_channel', '0'):
+                ctx.send('Server add failed')
         
         # Get the channel ID and enabled status from the database
-        self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (ctx.guild.id,))
-        enabled, channel = self.c.fetchone()
+        enabled, channel = 0, 0
+        with self.bot.db_session.begin() as c:
+            enabled = int(get_setting(c, ctx.guild.id, 'wc_enabled'))
+            channel = int(get_setting(c, ctx.guild.id, 'wc_channel'))
         # Create an embed to display the current settings
         embed = discord.Embed(title='Welcome Admin', description='Usage: $admin welcome <subcommand> <arguments>')
 
@@ -216,24 +233,24 @@ class Admin(commands.Cog):
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def enable(self, ctx: commands.Context):
         # Update the enabled status in the database
-        self.c.execute('UPDATE welcome SET wenabled=1 WHERE server_id=?', (ctx.guild.id,))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'wc_enabled', '1')
         await ctx.send('Welcome messages enabled')
 
     @welcome.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def disable(self, ctx: commands.Context):
         # Update the enabled status in the database
-        self.c.execute('UPDATE welcome SET wenabled=0 WHERE server_id=?', (ctx.guild.id,))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'wc_enabled', '0')
         await ctx.send('Welcome messages disabled')
 
     @welcome.command()
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def setchannel(self, ctx: commands.Context):
         # Update the channel ID in the database to the current channel
-        self.c.execute('UPDATE welcome SET channel_id=? WHERE server_id=?', (ctx.channel.id, ctx.guild.id))
-        self.db.commit()
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'wc_channel', str(ctx.channel.id))
         await ctx.send(f'Welcome messages channel set to {ctx.channel.name}')
 
     # Purge a specific reaction a specific message to protect under 18s
@@ -268,16 +285,6 @@ class Admin(commands.Cog):
             await asyncio.sleep(0.5)
 
         await ctx.send(f'{count} reactions purged')
-
-    # Delete a specific message.
-    @admin.command()
-    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def delete(self, ctx: commands.Context, message_id: int):
-        # Get the message object
-        message = await ctx.channel.fetch_message(message_id)
-        await message.delete()
-        # Delete the invoking message
-        await ctx.message.delete()
 
         
 

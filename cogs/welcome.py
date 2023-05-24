@@ -1,5 +1,7 @@
 import discord
-import sqlite3
+import sqlalchemy
+from sqlalchemy.orm import Session
+from models import ServerSettings, get_setting, set_setting, check_setting
 import os
 import random
 from discord.ext import commands
@@ -12,8 +14,8 @@ class Welcome(commands.Cog):
     """Welcome users to the server using a welcome card"""
     def __init__(self, bot):
         self.bot = bot
-        self.db = sqlite3.connect('database.db')
-        self.c = self.db.cursor()
+        # self.db = sqlite3.connect('database.db')
+        # self.c = self.db.cursor()
 
         # Override goodbyes, in case we want to give someone a custom goodbye
         # Dictionary with a user's ID as the key and a goodbye message as the value
@@ -24,8 +26,13 @@ class Welcome(commands.Cog):
     async def on_member_join(self, member: discord.Member):
         """When a member joins, generate a welcome card"""
         # Query the database for the enabled status and channel
-        self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (member.guild.id,))
-        result = self.c.fetchone()
+        # self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (member.guild.id,))
+        # result = self.c.fetchone()
+        result = None
+        with self.bot.db_session.begin() as c:
+            check_setting(member.guild.id, c, 'wc_enabled', '0')
+            check_setting(member.guild.id, c, 'wc_channel', '0')
+            result = int(get_setting(c, member.guild.id, 'wc_enabled')), int(get_setting(c, member.guild.id, 'wc_channel'))
         # If the result is None, return
         if result is None:
             return
@@ -111,8 +118,12 @@ class Welcome(commands.Cog):
             insult = random.choice(insults)
 
         # Query the database for the enabled status and channel
-        self.c.execute('SELECT wenabled, channel_id FROM welcome WHERE server_id=?', (member.guild.id,))
-        result = self.c.fetchone()
+        # self.c.execute('SELECT wenabled, wc_channel FROM welcome WHERE server_id=?', (member.guild.id,))
+        # result = self.c.fetchone()
+        with self.bot.db_session.begin() as c:
+            check_setting(member.guild.id, c, 'wc_enabled', '0')
+            check_setting(member.guild.id, c, 'wc_channel', '0')
+            result = get_setting(c, member.guild.id, 'wc_enabled'), get_setting(c, member.guild.id, 'wc_channel')
         # If the result is None, return
         if result is None:
             return

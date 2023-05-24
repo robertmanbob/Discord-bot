@@ -5,9 +5,16 @@ import datetime
 import typing
 import discord
 import git
-import sqlite3 # Crying emoji here
+import sqlalchemy
+import logging
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session, sessionmaker
 import asyncio
 from discord.ext import commands
+
+# Logger
+logger = logging.getLogger('discord')
+logger.setLevel(logging.INFO)
 
 # Read the secret.ini file for bot token and config.ini for enabled cogs
 secret = configparser.ConfigParser()
@@ -24,6 +31,9 @@ class MyBot(commands.Bot):
             command_prefix='$',
             intents=discord.Intents.all(),
             owner_id=168392772506746880)
+        self.db_engine = create_engine('sqlite:///db/alchemy.db')
+        self.db_session = sessionmaker(bind=self.db_engine)
+        self.logger = logger
         
     async def setup_hook(self):
         # Load cogs
@@ -37,10 +47,10 @@ class MyBot(commands.Bot):
     
     async def on_ready(self):
         self.remove_command('help')
-        print('Logged in as')
-        print(self.user.name)
-        print(self.user.id)
-        print('------')
+        self.logger.info(f'Logged in as {self.user.name} ({self.user.id})')
+        self.logger.info(f'Using discord.py version {discord.__version__}')
+        self.logger.info(f'Using Python version {sys.version}')
+        self.logger.info(f'Using SQLAlchemy version {sqlalchemy.__version__}')
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
@@ -166,18 +176,21 @@ async def update(ctx):
     # Print that we updated the repo and the current commit
     await ctx.send(f'Updated to commit {repo.head.object.hexsha}, commit message: {repo.head.object.message}')
 
-# Connect to the database, run a query, and return the result
+# Connect to the SQLAlchemy db, run a query, and return the result
 # Owner only, not a slash command
 @bot.command()
 @commands.is_owner()
-async def query(ctx: discord.Interaction, *, query: str):
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute(query)
-    result = c.fetchall()
-    conn.commit()
-    conn.close()
-    await ctx.send(f'Result: {result}')
+async def query(ctx: commands.Context, *, query: str):
+    # Get the engine from the bot, type hint it as an engine
+    engine: sqlalchemy.engine.Engine = ctx.bot.db_engine
+    query = text(query)
+    with engine.connect() as conn:
+        results = conn.execute(query)
+        output = ''
+        for row in results:
+            output += str(row) + '\n'
+        await ctx.send(f'```{output}```')
+        
 
 # Disable a command, bot owner only. Not a slash command.
 @bot.command()

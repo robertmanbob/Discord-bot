@@ -1,7 +1,8 @@
 import discord
-import sqlite3
 from discord.ext import commands
 from discord import app_commands
+from sqlalchemy.orm import Session
+from models import ServerSettings, get_setting, set_setting, check_setting
 
 # Suggest table format:
 # server_id, enabled, channel_id
@@ -9,8 +10,6 @@ from discord import app_commands
 class Suggest(commands.Cog):
     """Suggest command cog, allows users to suggest things for the bot"""
     def __init__(self, bot: commands.Bot) -> None:
-        self.db = sqlite3.connect('database.db')
-        self.c = self.db.cursor()
         self.bot = bot
 
     # Slash command for suggesting things
@@ -23,8 +22,10 @@ class Suggest(commands.Cog):
             return
 
         # Check if suggestions are enabled, if so, get the suggestion channel
-        self.c.execute('SELECT enabled, channel_id FROM suggest WHERE server_id = ?', (ctx.guild.id,))
-        enabled, suggestion_channel = self.c.fetchone()
+        with self.bot.db_session.begin() as c:
+            enabled = int(get_setting(c, ctx.guild.id, 'sg_enabled'))
+            suggestion_channel = int(get_setting(c, ctx.guild.id, 'sg_channel'))
+            # get_setting returns None if the setting is not found, so we need to check for that
 
         # If suggestions are not enabled, don't send the suggestion
         if not enabled:
@@ -60,8 +61,9 @@ class Suggest(commands.Cog):
             return
 
         # Check if suggestions are enabled, if so, get the suggestion channel
-        self.c.execute('SELECT enabled, event_id FROM suggest WHERE server_id = ?', (ctx.guild.id,))
-        enabled, suggestion_channel = self.c.fetchone()
+        with self.bot.db_session.begin() as c:
+            enabled = int(get_setting(c, ctx.guild.id, 'sg_enabled'))
+            suggestion_channel = int(get_setting(c, ctx.guild.id, 'sg_event_channel'))
 
         # If suggestions are not enabled, don't send the suggestion
         if not enabled:
