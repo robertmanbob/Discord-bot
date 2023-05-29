@@ -2,7 +2,8 @@ secret.ini
 database.db
 *.pyc
 *.db
-*.txt
+panic.txt
+roles.txt
 *.png
 *.jpg
 /cogs/*ini
