@@ -111,14 +111,19 @@ class Watchdog(commands.Cog):
                     if role.id in self.watchlist:
                         snitch_channel = None
                         mod_role = None
+                        admin_role = None
                         # Get the snitch channel
                         with self.bot.db_session.begin() as session:
                             check_setting(after.guild.id, session, 'wd_snitch_channel', "0")
                             check_setting(after.guild.id, session, 'ad_mod_role', "0")
+                            check_setting(after.guild.id, session, 'ad_admin_role', "0")
                             snitch_channel = get_setting(session, after.guild.id, 'wd_snitch_channel')
                             mod_role = get_setting(session, after.guild.id, 'ad_mod_role')
+                            admin_role = get_setting(session, after.guild.id, 'ad_admin_role')
                             # Convert mod_role to a role object
                             mod_role = discord.utils.get(after.guild.roles, id=int(mod_role))
+                            # Convert admin_role to a role object
+                            admin_role = discord.utils.get(after.guild.roles, id=int(admin_role))
                             if snitch_channel == "0":
                                 return
                         # Create the embed, pinging the mod role in the description if it exists
@@ -127,8 +132,8 @@ class Watchdog(commands.Cog):
                         embed.add_field(name="Time", value=f"<t:{round(time.time())}:t>")
                         embed.set_footer(text=f'User ID: {after.id}')
                         # Send the embed, pinging the mod role in the message if it exists
-                        if mod_role is not None:
-                            await self.bot.get_channel(int(snitch_channel)).send(f'{mod_role.mention}', embed=embed)
+                        if mod_role is not None and admin_role is not None:
+                            await self.bot.get_channel(int(snitch_channel)).send(f'{mod_role.mention} {admin_role.mention}', embed=embed)
                         else:
                             await self.bot.get_channel(int(snitch_channel)).send(embed=embed)
 

@@ -376,6 +376,16 @@ class Admin(commands.Cog):
             set_setting(c, ctx.guild.id, 'ad_mod_role', str(role.id))
         await ctx.send(f'Moderator role set to {role.name}')
 
+    # Add an admin role setting per server
+    @admin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def setadminrole(self, ctx: commands.Context, role: discord.Role):
+        # Update the role ID in the database to the current role
+        with self.bot.db_session.begin() as c:
+            check_setting(ctx.guild.id, c, 'ad_admin_role', '0')
+            set_setting(c, ctx.guild.id, 'ad_admin_role', str(role.id))
+        await ctx.send(f'Admin role set to {role.name}')
+
         
 
 async def setup(bot: commands.Bot):
