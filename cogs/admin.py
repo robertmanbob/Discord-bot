@@ -20,6 +20,7 @@ class Admin(commands.Cog):
         embed = discord.Embed(title='Admin Commands', description='Here are the available admin commands:')
         embed.add_field(name='Subcommands', 
                         value="""$admin vcadmin - Displays VC ping admin commands and current settings
+                        $admin deadchat - Displays deadchat admin commands and current settings
                         $admin suggest - Displays suggestion admin commands and current settings
                         $admin welcome - Displays welcome admin commands and current settings""", 
                         inline=False)
@@ -141,6 +142,85 @@ class Admin(commands.Cog):
         # Update the minimum rank in the database
         with self.bot.db_session.begin() as c:
             set_setting(c, ctx.guild.id, 'rp_min_rank', str(rank))
+        await ctx.send(f'Minimum rank set to {get_role_of_rank(ctx.guild, rank)}')
+
+    # Dead chat ping admin command sub-group
+    @admin.group(name='deadchat', description='Dead chat ping admin commands and settings', invoke_without_command=True)
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def deadchat(self, ctx: commands.Context):
+        # All dead chat ping settings are prefixed with dc_rp_
+        # Check whether the server is in the database or not
+        with self.bot.db_session.begin() as c:
+            check_setting(ctx.guild.id, c, 'dc_rp_enabled', '0')
+            check_setting(ctx.guild.id, c, 'dc_rp_min_rank', '0')
+            check_setting(ctx.guild.id, c, 'dc_rp_next_ping', '0')
+            check_setting(ctx.guild.id, c, 'dc_rp_timer_duration', '0')
+            check_setting(ctx.guild.id, c, 'dc_rp_role', '0')
+            # Get the enabled status from the database
+            enabled = int(get_setting(c, ctx.guild.id, 'dc_rp_enabled'))
+            min_rank = int(get_setting(c, ctx.guild.id, 'dc_rp_min_rank'))
+            timer_duration = int(get_setting(c, ctx.guild.id, 'dc_rp_timer_duration'))
+            role = int(get_setting(c, ctx.guild.id, 'dc_rp_role'))
+
+        # Create an embed to display the current settings
+        embed = discord.Embed(title='Dead chat ping settings', color=0x00ff00)
+        embed.add_field(name='Subcommands:', value="""$admin deadchat enable/disable - Enable or disable dead chat pings
+        $admin deadchat timer <time> - Set the time between pings in minutes
+        $admin deadchat setrole <role ID> - Set the role to ping
+        $admin deadchat minrank <rank> - Set the minimum rank to use the /pingdead command""", inline=False)
+        embed.add_field(name='Enabled:', value=f"""Enabled: {bool(enabled)}""", inline=False)
+        embed.add_field(name='Minimum rank:', value=f"""{get_role_of_rank(ctx.guild, min_rank)}""", inline=False)
+        embed.add_field(name='Timer duration:', value=f"""{timer_duration} minutes""", inline=False)
+        embed.add_field(name='Role:', value=f"""{ctx.guild.get_role(role).mention}""", inline=False)
+        embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
+        await ctx.send(embed=embed)
+
+    @deadchat.command(name='enable', aliases=['dc_enable'])
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def dc_enable(self, ctx: commands.Context):
+        # Update the enabled status in the database
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'dc_rp_enabled', '1')
+        await ctx.send('Dead chat pings enabled')
+
+    @deadchat.command(name='disable', aliases=['dc_disable'])
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def dc_disable(self, ctx: commands.Context):
+        # Update the enabled status in the database
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'dc_rp_enabled', '0')
+        await ctx.send('Dead chat pings disabled')
+
+    @deadchat.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def timer(self, ctx: commands.Context, time: int):
+        # Validate time, must be a positive integer
+        if time < 0:
+            await ctx.send('Invalid time')
+            return
+        # Update the timer duration in the database
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'dc_rp_timer_duration', str(time))
+        await ctx.send(f'Timer duration set to {time} minutes')
+
+    @deadchat.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def setrole(self, ctx: commands.Context, role: discord.Role):
+        # Update the role ID in the database
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'dc_rp_role', str(role.id))
+        await ctx.send(f'Role set to {role.name}')
+
+    @deadchat.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def minrank(self, ctx: commands.Context, rank: int):
+        # Validate rank, must be a positive integer
+        if rank < 0:
+            await ctx.send('Invalid rank')
+            return
+        # Update the minimum rank in the database
+        with self.bot.db_session.begin() as c:
+            set_setting(c, ctx.guild.id, 'dc_rp_min_rank', str(rank))
         await ctx.send(f'Minimum rank set to {get_role_of_rank(ctx.guild, rank)}')
 
     # Suggest admin command sub-group
@@ -285,6 +365,16 @@ class Admin(commands.Cog):
             await asyncio.sleep(0.5)
 
         await ctx.send(f'{count} reactions purged')
+
+    # Add a moderator role setting per server
+    @admin.command()
+    @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
+    async def setmodrole(self, ctx: commands.Context, role: discord.Role):
+        # Update the role ID in the database to the current role
+        with self.bot.db_session.begin() as c:
+            check_setting(ctx.guild.id, c, 'ad_mod_role', '0')
+            set_setting(c, ctx.guild.id, 'ad_mod_role', str(role.id))
+        await ctx.send(f'Moderator role set to {role.name}')
 
         
 

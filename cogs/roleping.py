@@ -62,6 +62,54 @@ class RolePings(commands.Cog):
             # Finally, ping the role
             await ctx.response.send_message(f'Hey {role.mention}! {ctx.user.mention} has decided that it\'s time to chat!',
                                              allowed_mentions=discord.AllowedMentions(roles=True))
+            
+    # Command to ping the dead chat role
+    @app_commands.command(name='pingdead', description='Attempt to exercise the power of necromancy and revive the chat')
+    async def pingdead(self, ctx: discord.Interaction):
+        # Check if the server is in the database
+        enabled, role, next_ping_time, ping_timer, min_rank = None, None, None, None, None
+        with self.bot.db_session.begin() as c:
+            # All dead chat pings are prefixed with dc_rp_
+            enabled = int(get_setting(c, ctx.guild.id, 'dc_rp_enabled'))
+            role = int(get_setting(c, ctx.guild.id, 'dc_rp_role'))
+            next_ping_time = int(get_setting(c, ctx.guild.id, 'dc_rp_next_ping'))
+            ping_timer = int(get_setting(c, ctx.guild.id, 'dc_rp_timer_duration'))
+            min_rank = int(get_setting(c, ctx.guild.id, 'dc_rp_min_rank'))
+
+            # If the server is disabled or not in the database, don't ping the role
+            if enabled == 0 or enabled is None:
+                await ctx.response.send_message('Dead chat pings are disabled for this server.', ephemeral=True)
+                return
+
+            # Check if the user is at least rank min_rank
+            if not user_is_at_least(ctx.user, min_rank):
+                await ctx.response.send_message('You are not high enough level to use this command!', ephemeral=True)
+                return
+            
+            role = discord.utils.get(ctx.guild.roles, id=role)
+
+            # If the role is not found, don't ping the role (duh)
+            if role is None:
+                await ctx.response.send_message('Role not found, tell an admin to check `$roleadmin`', ephemeral=True)
+                return
+            
+            # Check if current unix time is greater than the next ping time
+            if time.time() > next_ping_time:
+                # Update the next ping time in the database
+                next_time = int(time.time() + ping_timer * 60)
+                set_setting(c, ctx.guild.id, 'dc_rp_next_role_ping', str(next_time))
+
+            # If the next ping time is in the future, don't ping the role
+            else:
+                await ctx.response.send_message(f'It\'s not time to chat yet! {role.mention} can be pinged again at <t:{next_ping_time}:t>',
+                                                 ephemeral=True)
+                return
+            
+            # Finally, ping the role
+            await ctx.response.send_message(f'Hey {role.mention}! {ctx.user.mention} has decided that it\'s time to chat!',
+                                             allowed_mentions=discord.AllowedMentions(roles=True))
+            
+
 
     @commands.command(name='listroles', description='List all roles and their IDs in the server')
     @commands.check_any(commands.is_owner(), commands.has_permissions(administrator=True))

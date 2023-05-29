@@ -123,7 +123,8 @@ class Welcome(commands.Cog):
         with self.bot.db_session.begin() as c:
             check_setting(member.guild.id, c, 'wc_enabled', '0')
             check_setting(member.guild.id, c, 'wc_channel', '0')
-            result = get_setting(c, member.guild.id, 'wc_enabled'), get_setting(c, member.guild.id, 'wc_channel')
+            result = int(get_setting(c, member.guild.id, 'wc_enabled')), int(get_setting(c, member.guild.id, 'wc_channel'))
+            # print(f"Leave message time {result}")
         # If the result is None, return
         if result is None:
             return
