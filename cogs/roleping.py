@@ -64,8 +64,8 @@ class RolePings(commands.Cog):
                                              allowed_mentions=discord.AllowedMentions(roles=True))
             
     # Command to ping the dead chat role
-    @app_commands.command(name='pingdead', description='Attempt to exercise the power of necromancy and revive the chat')
-    async def pingdead(self, ctx: discord.Interaction):
+    @app_commands.command(name='deadchat', description='Attempt to exercise the power of necromancy and revive the chat')
+    async def deadchat(self, ctx: discord.Interaction):
         # Check if the server is in the database
         enabled, role, next_ping_time, ping_timer, min_rank = None, None, None, None, None
         with self.bot.db_session.begin() as c:
