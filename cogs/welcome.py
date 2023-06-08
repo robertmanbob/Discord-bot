@@ -100,6 +100,10 @@ class Welcome(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         """When a member leaves, send a message in the welcome channel"""
+        # If the user is a bot, return
+        if member.bot:
+            return
+
         insults = [", they were a smelly potbellied prick anyway!", 
                    ". A pox on their house!",
                    ". I knew something was off about them!",
