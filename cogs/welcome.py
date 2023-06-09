@@ -140,7 +140,7 @@ class Welcome(commands.Cog):
         if channel is None:
             return
         # Send the message in an embed with a random insult
-        embed = discord.Embed(description=f"Looks like {member.name}#{member.discriminator} left" + insult)
+        embed = discord.Embed(description=f"Looks like {member.name} left" + insult)
         await channel.send(embed=embed)
 
     # Test leave listener
