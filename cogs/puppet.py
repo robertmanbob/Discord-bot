@@ -1,4 +1,5 @@
 import discord
+import re
 from discord.ext import commands
 
 class Puppet(commands.Cog):
@@ -15,9 +16,22 @@ class Puppet(commands.Cog):
         await ctx.send("Puppeting in channel: " + channel.mention)
         while True:
             msg = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author)
+
+            # if no message content, continue
+            if not msg.content:
+                continue
+
             if msg.content == "exit":
                 await ctx.send("Exiting puppet mode.")
                 break
+
+            # If an emoji is an animated emoji, it will be in the format :emoji_name:
+            # This regex will find all instances of that and replace them with the actual emoji
+            # This is done in case the user wants to send an animated emoji but doesn't have nitro
+            # This will also work for normal emojis, but it's not necessary
+            msg.content = re.sub(r':([a-zA-Z0-9_]+):', lambda m: str(discord.utils.get(self.bot.emojis, name=m.group(1))), msg.content)
+
+
             await channel.send(msg.content)
 
     # Edits a message as the bot.
