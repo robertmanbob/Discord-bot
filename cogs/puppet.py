@@ -48,6 +48,10 @@ class Puppet(commands.Cog):
         await ctx.send("Send a message to edit the message to. Type 'exit' to cancel.")
         msg = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author)
 
+        # Same regex as above
+        msg.content = re.sub(r'<(a?):([a-zA-Z0-9_]+):[0-9]+>', r':\2:', msg.content)
+        msg.content = re.sub(r':([a-zA-Z0-9_]+):', lambda m: str(discord.utils.get(self.bot.emojis, name=m.group(1))), msg.content)
+
         if msg.content == "exit":
             await ctx.send("canceled edit.")
             return
