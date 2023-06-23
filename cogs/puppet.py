@@ -25,6 +25,11 @@ class Puppet(commands.Cog):
                 await ctx.send("Exiting puppet mode.")
                 break
 
+            # Sometimes emojis are sent in the format <a:emoji_name:emoji_id>.
+            # We just want them to be :emoji_name: so we can use the emoji
+            # This regex will find all instances of that and replace them with :emoji_name:
+            msg.content = re.sub(r'<a:[a-zA-Z0-9_]+:([0-9]+)>', lambda m: ":" + m.group(1) + ":", msg.content)
+
             # If an emoji is an animated emoji, it will be in the format :emoji_name:
             # This regex will find all instances of that and replace them with the actual emoji
             # This is done in case the user wants to send an animated emoji but doesn't have nitro
