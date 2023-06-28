@@ -96,7 +96,7 @@ class Watchdog(commands.Cog):
 
     # Events
     @commands.Cog.listener()
-    async def on_member_update(self, before, after):
+    async def on_member_update(self, before, after: discord.Member):
         """Watch for role changes"""
         enabled = None
         # Check if the watchdog is enabled
@@ -127,10 +127,12 @@ class Watchdog(commands.Cog):
                             if snitch_channel == "0":
                                 return
                         # Create the embed, pinging the mod role in the description if it exists
-                        embed = discord.Embed(title='Role Watch', description=f'Watched role added by {after.mention}', color=0xff0000)
+                        embed = discord.Embed(title='Role Watch', description=f'Watched role added by {after.name}', color=0xff0000)
                         embed.add_field(name="Role", value=role.mention)
                         embed.add_field(name="Time", value=f"<t:{round(time.time())}:t>")
-                        embed.set_footer(text=f'User ID: {after.id}')
+                        embed.add_field(name="User", value=after.mention)
+                        embed.add_field(name="User ID (long press on mobile to copy easily)", value=after.id, inline=False)
+                        embed.set_thumbnail(url=after.display_avatar.url if after.display_avatar else "https://cdn.discordapp.com/embed/avatars/0.png")
                         # Send the embed, pinging the mod role in the message if it exists
                         if mod_role is not None and admin_role is not None:
                             await self.bot.get_channel(int(snitch_channel)).send(f'{mod_role.mention} {admin_role.mention}', embed=embed)
