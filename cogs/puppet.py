@@ -36,8 +36,11 @@ class Puppet(commands.Cog):
             # This will also work for normal emojis, but it's not necessary
             msg.content = re.sub(r':([a-zA-Z0-9_]+):', lambda m: str(discord.utils.get(self.bot.emojis, name=m.group(1))), msg.content)
 
-
-            await channel.send(msg.content)
+            # If an image is attached, send the image
+            if msg.attachments:
+                await channel.send(msg.content, file=await msg.attachments[0].to_file())
+            else:
+                await channel.send(msg.content)
 
     # Edits a message as the bot.
     # Asks for a channel and message id to edit, then asks for a message to edit to
@@ -57,7 +60,10 @@ class Puppet(commands.Cog):
             return
         try:
             message = await channel.fetch_message(message_id)
-            await message.edit(content=msg.content)
+            if msg.attachments:
+                await message.edit(content=msg.content, file=await msg.attachments[0].to_file())
+            else:
+                await message.edit(content=msg.content)
         except discord.NotFound:
             await ctx.send("Message not found.")
         except discord.Forbidden:
