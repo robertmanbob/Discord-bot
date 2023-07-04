@@ -77,9 +77,9 @@ class Admin(commands.Cog):
             embed.set_footer(text=self.bot.user.name, icon_url=self.bot.user.avatar.url)
             await ctx.send(embed=embed)
 
-    @vcadmin.command()
+    @vcadmin.command(name='timer', aliases=['vc_timer'], description='Set the time between role pings in minutes')
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def timer(self, ctx: commands.Context, time: int):
+    async def vc_timer(self, ctx: commands.Context, time: int):
         # Validate time, must be a positive integer
         if time <= 0:
             await ctx.send('Invalid time')
@@ -191,9 +191,9 @@ class Admin(commands.Cog):
             set_setting(c, ctx.guild.id, 'dc_rp_enabled', '0')
         await ctx.send('Dead chat pings disabled')
 
-    @deadchat.command()
+    @deadchat.command(name='timer', aliases=['dc_timer'])
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
-    async def timer(self, ctx: commands.Context, time: int):
+    async def dc_timer(self, ctx: commands.Context, time: int):
         # Validate time, must be a positive integer
         if time < 0:
             await ctx.send('Invalid time')
