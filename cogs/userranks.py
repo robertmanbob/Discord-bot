@@ -55,10 +55,10 @@ class UserCommands(commands.Cog):
     @commands.command(name='listranks', description='List all roles in the database')
     @commands.check_any(commands.has_permissions(manage_guild=True), commands.is_owner())
     async def listranks(self, ctx: commands.Context):
-        # self.c.execute('SELECT * FROM ranks WHERE server_id=?', (ctx.guild.id, ))
-        # roles = self.c.fetchall()
         with self.bot.db_session.begin() as c:
             roles = c.query(Rank).filter_by(server_id=ctx.guild.id).all()
+            # Expunge the roles from the session so they can be used outside of it
+            c.expunge_all()
         # If no roles are found, state that
         if len(roles) == 0:
             await ctx.send('No roles found')
