@@ -151,13 +151,6 @@ class Silly(commands.Cog):
             # If the bot doesn't have permission to change the nickname, let them know
             await ctx.channel.send(f'I don\'t have permission to change {ctx.user.mention}\'s nickname, so we\'re going to get with the honor system and pretend I did. Their nickname is now {reply.content}!')
 
-    # # Bot owner or specified person, not a slash command
-    # # Sends a lemon man image
-    # @commands.command()
-    # async def nona(self, ctx: commands.Context):
-    #     if ctx.author.id == ctx.bot.owner_id or ctx.author.id == 686724506164658221:
-    #         await ctx.send(embed=discord.Embed().set_image(url='https://i.imgur.com/ycbiaBS.png'))
-
     # Bot owner, slash command
     @app_commands.command(name='asay', description='Make the bot say something. Requires perms.')
     async def asay(self, ctx: discord.Interaction, *, text: str):
@@ -265,14 +258,6 @@ class Silly(commands.Cog):
         # If not, let them know
         else:
             await ctx.response.send_message('You don\'t have permission to use this command!', ephemeral=True)
-
-    # Coin flip player reset debug
-    # Not a slash command
-    @commands.command(name='challengereset', description='Reset the coinflip challenge system.')
-    @commands.is_owner()
-    async def challengereset(self, ctx: commands.Context):
-        self.challenges = set()
-        await ctx.send('Challenges reset!')
 
 
 
